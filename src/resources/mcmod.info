@@ -1,0 +1,16 @@
+[
+{
+  "modid": "HorseStats",
+  "name": "Horse Stats",
+  "description": "Shows the stats of horses",
+  "version": "1.0.0",
+  "mcversion": "1.8",
+  "url": "https://github.com/MrLittleKitty/Horse-Stats",
+  "updateUrl": "",
+  "authorList": ["Mr_Little_Kitty"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
