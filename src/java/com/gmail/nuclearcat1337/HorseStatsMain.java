@@ -20,6 +20,7 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.opengl.GL11;
@@ -62,6 +63,12 @@ public class HorseStatsMain
     public static int numberOfDecimalsDisplayed = 2;
 
     private static DecimalFormat decimalFormat = GetDecimalFormat();
+
+    @Mod.EventHandler
+    public void preInitialize(FMLPreInitializationEvent event)
+    {
+
+    }
 
     @Mod.EventHandler
     public void initialize(FMLInitializationEvent event)
@@ -141,10 +148,10 @@ public class HorseStatsMain
             }
 
             //only show entities that are close by
-            double distanceFromMe = mc.thePlayer.getDistanceToEntity(animal);
+            double distanceFromMe = mc.thePlayer.getDistanceSqToEntity(animal);
 
-            if (distanceFromMe > maxViewDistanceCutoff
-                    || distanceFromMe > viewDistanceCutoff)
+            if (distanceFromMe*distanceFromMe > maxViewDistanceCutoff
+                    || distanceFromMe*distanceFromMe > viewDistanceCutoff)
             {
                 return;
             }
