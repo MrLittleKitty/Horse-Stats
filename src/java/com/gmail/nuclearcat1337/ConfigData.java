@@ -61,7 +61,7 @@ public class ConfigData
             writer.newLine();
 
             writer.write("number-of-decimals=2");
-            //writer.newLine();
+            writer.newLine();
 
             writer.flush();
             writer.close();
@@ -86,7 +86,7 @@ public class ConfigData
                 while((line = reader.readLine()) != null)
                 {
                     String[] lines = line.split("=");
-                    if(line.length() == 2)
+                    if(lines.length == 2)
                         setValue(lines[0],lines[1]);
                 }
                 reader.close();
@@ -94,7 +94,7 @@ public class ConfigData
             }
             catch(IOException ex)
             {
-
+                ex.printStackTrace();
             }
         }
     }
@@ -102,6 +102,7 @@ public class ConfigData
     private void setValue(String key, final String value)
     {
         key = key.toLowerCase();
+
         if(key.contains("jump"))
             setThresholdValue(jump,key,value);
         else if(key.contains("speed"))
@@ -142,6 +143,11 @@ public class ConfigData
     public int getRenderDistance()
     {
         return renderDistance;
+    }
+
+    public int getRenderDistanceSquared()
+    {
+        return renderDistance*renderDistance;
     }
 
     public int getMaxNumberOfOverlays()

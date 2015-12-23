@@ -6,7 +6,6 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.EntityLivingBase;
@@ -25,8 +24,10 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.commons.lang3.text.WordUtils;
 import org.lwjgl.opengl.GL11;
 
+import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 /*
 Created by Mr_Little_Kitty on 12/17/2015
@@ -34,45 +35,32 @@ Created by Mr_Little_Kitty on 12/17/2015
 @Mod(modid = HorseStatsMain.MODID, name = HorseStatsMain.MODNAME, version = HorseStatsMain.MODVERSION)
 public class HorseStatsMain
 {
-    private static Minecraft mc = Minecraft.getMinecraft();
-
     public static final String MODID = "HorseStats";
     public static final String MODNAME = "Horse Stats";
-    public static final String MODVERSION = "1.0.0";
+    public static final String MODVERSION = "1.1.0";
 
-    private static double perfectHorseSpeedThreshold = 13;	//max: 14.1?
-    private static double goodHorseSpeedThreshold = 11;
-    private static double badHorseSpeedThreshold = 9.5;		//min: ~7?
+    private static Minecraft mc = Minecraft.getMinecraft();
+    public static Logger logger = Logger.getLogger("HorseStats");
 
-    private static double perfectHorseJumpThreshold = 5;	//max: 5.5?
-    private static double goodHorseJumpThreshold = 4;
-    private static double badHorseJumpThreshold = 2.5;		//min: 1.2
-
-    private static int perfectHorseHPThreshold = 28;		//max: 30
-    private static int goodHorseHPThreshold = 24;
-    private static int badHorseHPThreshold = 20;			//min: 15
-
-    /** Animals that are farther away than this will not have their info shown */
-    private static int viewDistanceCutoff = 8;		//how far away we will render the overlay
-    private static int maxViewDistanceCutoff = 120;
-
-    public static boolean ShowTextBackgrounds = true;
-    private static final int maxNumberOfOverlays = 200;	//render only the first nearest 50 overlays
-
-    /** Sets the number of decimal places that will be rendered when displaying horse stats */
-    public static int numberOfDecimalsDisplayed = 2;
-
-    private static DecimalFormat decimalFormat = GetDecimalFormat();
+    private ConfigData data;
+    private DecimalFormat decimalFormat;
 
     @Mod.EventHandler
     public void preInitialize(FMLPreInitializationEvent event)
     {
+        logger.info("HorseStats: pre-Initializing");
+        File file = new File(Minecraft.getMinecraft().mcDataDir, "/mods/"+MODNAME);
+        if(!file.exists())
+            file.mkdir();
 
+        data = new ConfigData(new File(file,"/config.txt").toString());
+        decimalFormat = GetDecimalFormat(data.getNumberOfDecimals());
     }
 
     @Mod.EventHandler
     public void initialize(FMLInitializationEvent event)
     {
+        logger.info("HorseStats: Initializing");
         MinecraftForge.EVENT_BUS.register(this);
     }
 
@@ -80,7 +68,7 @@ public class HorseStatsMain
      * Gets the amount of decimals that should be displayed with a DecimalFormat object.
      * @return
      */
-    private static DecimalFormat GetDecimalFormat()
+    private static DecimalFormat GetDecimalFormat(int numberOfDecimalsDisplayed)
     {
         if(numberOfDecimalsDisplayed < 1)
             return new DecimalFormat("#");
@@ -122,7 +110,7 @@ public class HorseStatsMain
      * @param entity
      * @param partialTickTime
      */
-    private static void RenderEntityInfoInWorld(Entity entity, float partialTickTime)
+    private void RenderEntityInfoInWorld(Entity entity, float partialTickTime)
     {
         if (!(entity instanceof EntityAgeable))
         {
@@ -137,7 +125,7 @@ public class HorseStatsMain
         if ((mc.inGameHasFocus || mc.currentScreen == null || mc.currentScreen instanceof GuiChat)
                 && !mc.gameSettings.showDebugInfo)
         {
-            if(i > maxNumberOfOverlays)
+            if(i > data.getMaxNumberOfOverlays())
                 return;
 
             EntityAgeable animal = (EntityAgeable)entity;
@@ -150,8 +138,7 @@ public class HorseStatsMain
             //only show entities that are close by
             double distanceFromMe = mc.thePlayer.getDistanceSqToEntity(animal);
 
-            if (distanceFromMe*distanceFromMe > maxViewDistanceCutoff
-                    || distanceFromMe*distanceFromMe > viewDistanceCutoff)
+            if (distanceFromMe > data.getRenderDistanceSquared())
             {
                 return;
             }
@@ -202,16 +189,6 @@ public class HorseStatsMain
     }
 
     /**
-     * Gets the max hearts an entity has
-     * @param entity
-     * @return e.x. Steve = 20 hit points
-     */
-    private static int GetEntityMaxHearts(EntityLivingBase entity)
-    {
-        return (int) Math.round(entity.getEntityAttribute(SharedMonsterAttributes.maxHealth).getAttributeValue() / 2);
-    }
-
-    /**
      * Gets an entity's max run speed in meters(blocks) per second
      * @param entity
      * @return e.x. Steve = 4.3 m/s. Horses ~7-13
@@ -223,85 +200,18 @@ public class HorseStatsMain
         return entity.getEntityAttribute(SharedMonsterAttributes.movementSpeed).getAttributeValue() * 43;
     }
 
-    /**
-     * Gets a horses speed, colored based on how good it is.
-     * @param horse
-     * @return e.x.:<br>aqua "13.5"<br>green "12.5"<br>white "11.3"<br>red "7.0"
-     */
-    private static String GetHorseSpeedText(EntityHorse horse)
+    private String getFormattedText(final Threshold threshold, String initialString, double value)
     {
-        double horseSpeed = GetEntityMaxSpeed(horse);
-        String horseSpeedString = decimalFormat.format(horseSpeed);
+        String finalString = decimalFormat.format(value);
 
-        if (horseSpeed > perfectHorseSpeedThreshold)
-            horseSpeedString = EnumChatFormatting.AQUA + horseSpeedString + EnumChatFormatting.WHITE;
-        else if (horseSpeed > goodHorseSpeedThreshold)
-            horseSpeedString = EnumChatFormatting.GREEN + horseSpeedString + EnumChatFormatting.WHITE;
-        else if (horseSpeed < badHorseSpeedThreshold)
-            horseSpeedString = EnumChatFormatting.RED + horseSpeedString + EnumChatFormatting.WHITE;
+        if (value > threshold.getGood())
+            finalString = EnumChatFormatting.AQUA + finalString + EnumChatFormatting.WHITE;
+        else if (value > threshold.getAverage())
+            finalString = EnumChatFormatting.GREEN + finalString + EnumChatFormatting.WHITE;
+        else if (value < threshold.getBad())
+            finalString = EnumChatFormatting.RED + finalString + EnumChatFormatting.WHITE;
 
-        return horseSpeedString;
-    }
-
-    /**
-     * Gets a horses HP, colored based on how good it is.
-     * @param horse
-     * @return e.x.:<br>aqua "28"<br>green "26"<br>white "22"<br>red "18"
-     */
-    private static String GetHorseHPText(EntityHorse horse)
-    {
-        int horseHP = GetEntityMaxHP(horse);
-        String horseHPString = decimalFormat.format(GetEntityMaxHP(horse));
-
-        if (horseHP > perfectHorseHPThreshold)
-            horseHPString = EnumChatFormatting.AQUA + horseHPString + EnumChatFormatting.WHITE;
-        else if (horseHP > goodHorseHPThreshold)
-            horseHPString = EnumChatFormatting.GREEN + horseHPString + EnumChatFormatting.WHITE;
-        else if (horseHP < badHorseHPThreshold)
-            horseHPString = EnumChatFormatting.RED + horseHPString + EnumChatFormatting.WHITE;
-
-        return horseHPString;
-    }
-
-    /**
-     * Gets a horses hearts, colored based on how good it is.
-     * @param horse
-     * @return e.x.:<br>aqua "15"<br>green "13"<br>white "11"<br>red "9"
-     */
-    private static String GetHorseHeartsText(EntityHorse horse)
-    {
-        int horseHP = GetEntityMaxHP(horse);
-        int horseHearts = GetEntityMaxHearts(horse);
-        String horseHeartsString = "" + horseHearts;
-
-        if (horseHP > perfectHorseHPThreshold)
-            horseHeartsString = EnumChatFormatting.AQUA + horseHeartsString + EnumChatFormatting.WHITE;
-        else if (horseHP > goodHorseHPThreshold)
-            horseHeartsString = EnumChatFormatting.GREEN + horseHeartsString + EnumChatFormatting.WHITE;
-        else if (horseHP < badHorseHPThreshold)
-            horseHeartsString = EnumChatFormatting.RED + horseHeartsString + EnumChatFormatting.WHITE;
-
-        return horseHeartsString;
-    }
-
-    /**
-     * Gets a horses jump height, colored based on how good it is.
-     * @param horse
-     * @return e.x.:<br>aqua "5.4"<br>green "4"<br>white "3"<br>red "1.5"
-     */
-    private static String GetHorseJumpText(EntityHorse horse)
-    {
-        double horseJump = GetHorseMaxJump(horse);
-        String horseJumpString = decimalFormat.format(horseJump);
-
-        if (horseJump > perfectHorseJumpThreshold)
-            horseJumpString = EnumChatFormatting.AQUA + horseJumpString + EnumChatFormatting.WHITE;
-        else if (horseJump > goodHorseJumpThreshold)
-            horseJumpString = EnumChatFormatting.GREEN + horseJumpString + EnumChatFormatting.WHITE;
-        else if (horseJump < badHorseJumpThreshold)
-            horseJumpString = EnumChatFormatting.RED + horseJumpString + EnumChatFormatting.WHITE;
-
-        return horseJumpString;
+        return finalString;
     }
 
     /**
@@ -325,31 +235,11 @@ public class HorseStatsMain
     }
 
     /**
-     * Gets a horses secondary coloring
-     * @param horse
-     * @return empty string if there is no secondary coloring (for donkeys)
-     */
-    private static String GetHorseMarkingText(EntityHorse horse)
-    {
-        String texture = horse.getVariantTexturePaths()[1];
-
-        if(texture == null || texture.isEmpty())
-            return "";
-
-        String[] textureArray = texture.split("/");				//"textures/entity/horse/horse_markings_blackdots.png"
-        texture = textureArray[textureArray.length-1];			//"horse_markings_blackdots.png"
-        texture = texture.substring(15, texture.length()-4);	//"blackdots"
-        texture = WordUtils.capitalize(texture);				//"Blackdots"
-
-        return texture;
-    }
-
-    /**
      * Renders an overlay in the game world for the specified animal.
      * @param animal
      * @param partialTickTime
      */
-    protected static void RenderAnimalOverlay(EntityAgeable animal, float partialTickTime)
+    protected void RenderAnimalOverlay(EntityAgeable animal, float partialTickTime)
     {
         float x = (float)animal.posX;
         float y = (float)animal.posY;
@@ -364,9 +254,9 @@ public class HorseStatsMain
         {
             EntityHorse horse = (EntityHorse)animal;
 
-            multilineOverlayArrayList.add(GetHorseSpeedText(horse) + " m/s");
-            multilineOverlayArrayList.add(GetHorseHPText(horse) + " hp");
-            multilineOverlayArrayList.add(GetHorseJumpText(horse) + " jump");
+            multilineOverlayArrayList.add(getFormattedText(data.getSpeedThreshold(),"",GetEntityMaxSpeed(horse)) + " m/s");
+            multilineOverlayArrayList.add(getFormattedText(data.getHealthThreshold(), "", GetEntityMaxHP(horse)) + " hp");
+            multilineOverlayArrayList.add(getFormattedText(data.getJumpThreshold(),"",GetHorseMaxJump(horse)) + " jump");
 
             if (animalGrowingAge < 0)
                 multilineOverlayArrayList.add(GetHorseBabyGrowingAgeAsPercent(horse) + "%");
@@ -378,7 +268,7 @@ public class HorseStatsMain
         if(multilineOverlayMessage[0] != null)
         {
             //render the overlay message
-            RenderFloatingText(multilineOverlayMessage, x, y, z, 0xFFFFFF, ShowTextBackgrounds, partialTickTime);
+            RenderFloatingText(multilineOverlayMessage, x, y, z, 0xFFFFFF, data.showBackground(), partialTickTime);
         }
     }
 
