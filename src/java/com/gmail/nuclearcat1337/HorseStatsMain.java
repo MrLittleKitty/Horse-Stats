@@ -6,6 +6,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.entity.RenderManager;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.EntityLivingBase;
@@ -14,6 +15,7 @@ import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.passive.EntityHorse;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -21,7 +23,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.InputEvent;
 import org.apache.commons.lang3.text.WordUtils;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import java.io.File;
@@ -45,6 +49,9 @@ public class HorseStatsMain
     private ConfigData data;
     private DecimalFormat decimalFormat;
 
+    private KeyBinding toggleButton = new KeyBinding("Toggle Show Stats", Keyboard.KEY_P,"Horse Stats");
+    private boolean enabled = true;
+
     @Mod.EventHandler
     public void preInitialize(FMLPreInitializationEvent event)
     {
@@ -62,6 +69,16 @@ public class HorseStatsMain
     {
         logger.info("HorseStats: Initializing");
         MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    @SubscribeEvent
+    private void onKeyPress(InputEvent.KeyInputEvent event)
+    {
+        if(toggleButton.isPressed())
+        {
+            enabled = !enabled;
+            mc.thePlayer.addChatComponentMessage(new ChatComponentText("Displaying Horse Stats is now "+(enabled ? "Enabled" : "Disabled")));
+        }
     }
 
     /**
@@ -88,7 +105,7 @@ public class HorseStatsMain
     @SubscribeEvent
     public void RenderWorldLastEvent(RenderWorldLastEvent event)
     {
-        if(mc.inGameHasFocus)
+        if(mc.inGameHasFocus && enabled)
         {
             for (int i = 0; i < mc.theWorld.loadedEntityList.size(); i++)
             {
