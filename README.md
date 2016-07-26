@@ -5,8 +5,8 @@ This mod uses code from the Zyin's Hud mod to display the stats of horses in Min
 
 A download of the working mod is here: 
 
-V1.1.0
-http://www.mediafire.com/download/5vyiddqtil5j8b5
+# Releases
 
-V1.0.0
-https://www.mediafire.com/?05vih1r5vm03xuy
+V1.1.0
+https://github.com/MrLittleKitty/Horse-Stats/releases/tag/v1.1.0
+
