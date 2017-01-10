@@ -5,7 +5,7 @@
 /libs
 /.gradle
 
-.iml
+*.iml
 
 # User-specific stuff:
 .idea/workspace.xml

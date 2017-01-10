@@ -60,4 +60,30 @@ public class Threshold
 
         return returnValue;
     }
+
+    @Override
+    public String toString()
+    {
+        return new StringBuilder().append(getBad()).append('-').append(getAverage()).append('-').append(getGood()).toString();
+    }
+
+    public static Threshold fromString(String stringForm)
+    {
+        String[] args = stringForm.split("-");
+        if(args.length != 3)
+            return null;
+
+        try
+        {
+            double bad = Double.parseDouble(args[0]);
+            double average = Double.parseDouble(args[1]);
+            double good = Double.parseDouble(args[2]);
+
+            return new Threshold(bad,average,good);
+        }
+        catch(NumberFormatException e)
+        {
+            return null;
+        }
+    }
 }

@@ -31,11 +31,20 @@ public class HorseStats
     public static final String MODNAME = "Horse Stats";
     public static final String MODVERSION = "2.0.0";
 
+    private static final String RENDER_KEY = "should-render";
+    private static final String RENDER_DISTANCE_KEY = "render-distance";
+    private static final String JUMP_KEY = "jump-threshold";
+    private static final String SPEED_KEY = "speed-threshold";
+    private static final String HEALTH_KEY = "health-threshold";
+
     private static Minecraft mc = Minecraft.getMinecraft();
+    private static final String modSettingsFile = mc.mcDataDir+"/mods/"+MODNAME+"/Settings.txt";
 
     @Mod.Instance(MODID)
     public static HorseStats instance;
     public static Logger logger = Logger.getLogger("HorseStats");
+
+    private Settings settings;
 
     private DecimalFormat decimalFormat;
 
@@ -44,12 +53,8 @@ public class HorseStats
     public void preInitialize(FMLPreInitializationEvent event)
     {
         logger.info("HorseStats: pre-Initializing");
-        File file = new File(Minecraft.getMinecraft().mcDataDir, "/mods/"+MODNAME);
-        if(!file.exists())
-            file.mkdir();
 
-//        data = new ConfigData(new File(file,"/config.txt").toString());
-//        decimalFormat = GetDecimalFormat(data.getNumberOfDecimals());
+//        initializeSettings();
     }
 
     @Mod.EventHandler
@@ -57,51 +62,43 @@ public class HorseStats
     {
         logger.info("HorseStats: Initializing");
 
-        //Self registers with forge to receive proper events
-        new KeyHandler();
-
-        MinecraftForge.EVENT_BUS.register(this);
+//        //Self registers with forge to receive proper events
+//        new KeyHandler();
+//
+//        MinecraftForge.EVENT_BUS.register(this);
     }
 
     private boolean shouldRenderStats()
     {
-        //TODO---This is a placeholder method and needs to use a config for some shit
-        return false;
+        return (Boolean)settings.getValue(RENDER_KEY);
     }
 
-    private int getMaxNumberOfOverlays()
-    {
-        //TODO---This is a placeholder method and needs to use a config for some shit
-        return 0;
-    }
+//    private int getMaxNumberOfOverlays()
+//    {
+//        //TODO---This is a placeholder method and needs to use a config for some shit
+//        return 0;
+//    }
 
     private int getRenderDistanceSquared()
     {
-        //TODO---This is a placeholder method and needs to use a config for some shit
-        return 0;
+        Integer distance = (Integer)settings.getValue(RENDER_DISTANCE_KEY);
+        return distance*distance;
     }
 
     private Threshold getSpeedThreshold()
     {
-        //TODO---This is a placeholder method and needs to use a config for some shit
-        return null;
+        return (Threshold)settings.getValue(SPEED_KEY);
     }
 
     private Threshold getJumpThreshold()
     {
-        //TODO---This is a placeholder method and needs to use a config for some shit
-        return null;
+        return (Threshold)settings.getValue(JUMP_KEY);
     }
 
     private Threshold getHealthThreshold()
     {
-        //TODO---This is a placeholder method and needs to use a config for some shit
-        return null;
+        return (Threshold)settings.getValue(HEALTH_KEY);
     }
-
-
-
-
 
 
     @SubscribeEvent
@@ -248,4 +245,51 @@ public class HorseStats
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         GL11.glPopMatrix();
     }
+
+    private void initializeSettings()
+    {
+        File file = new File(Minecraft.getMinecraft().mcDataDir, "/mods/"+MODNAME);
+        if(!file.exists())
+            file.mkdir();
+
+        settings = new Settings(new File(modSettingsFile),parser);
+        settings.loadSettings();
+
+        //Threshold(bad,average,good)
+        settings.setValueIfNotSet(JUMP_KEY,new Threshold(2.5,4,5));
+        settings.setValueIfNotSet(SPEED_KEY,new Threshold(9.5,11,13));
+        settings.setValueIfNotSet(HEALTH_KEY,new Threshold(20,24,28));
+
+        settings.setValueIfNotSet(RENDER_DISTANCE_KEY, 20);
+        settings.setValueIfNotSet(RENDER_KEY, Boolean.TRUE);
+
+        settings.saveSettings();
+    }
+
+    private static final Settings.ValueParser parser = new Settings.ValueParser()
+    {
+        @Override
+        public Object parse(String key, String value)
+        {
+            if(key.contains("threshold"))
+                return Threshold.fromString(value);
+            else if(value.equalsIgnoreCase(Boolean.FALSE.toString()))
+                return Boolean.FALSE;
+            else if(value.equalsIgnoreCase(Boolean.TRUE.toString()))
+                return Boolean.TRUE.toString();
+            else
+            {
+                try
+                {
+                    Integer i = Integer.parseInt(value);
+                    return i;
+                }
+                catch(NumberFormatException e)
+                {
+                    //Return a string
+                    return value;
+                }
+            }
+        }
+    };
 }
