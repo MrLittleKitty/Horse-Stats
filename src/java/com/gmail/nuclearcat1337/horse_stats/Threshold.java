@@ -1,4 +1,8 @@
-package com.gmail.nuclearcat1337;
+package com.gmail.nuclearcat1337.horse_stats;
+
+import com.mojang.realmsclient.gui.ChatFormatting;
+
+import java.text.DecimalFormat;
 
 /*
 Created by Mr_Little_Kitty on 12/22/2015
@@ -41,5 +45,19 @@ public class Threshold
     public void setGood(final double good)
     {
         this.good = good;
+    }
+
+    public String format(DecimalFormat format, double value)
+    {
+        String returnValue = format.format(value);
+
+        if (value > getGood())
+            returnValue = ChatFormatting.AQUA + returnValue + ChatFormatting.WHITE;
+        else if (value > getAverage())
+            returnValue = ChatFormatting.GREEN + returnValue + ChatFormatting.WHITE;
+        else if (value < getBad())
+            returnValue = ChatFormatting.RED + returnValue + ChatFormatting.WHITE;
+
+        return returnValue;
     }
 }
