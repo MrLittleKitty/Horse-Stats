@@ -31,6 +31,7 @@ public class HorseStats
     public static final String MODNAME = "Horse Stats";
     public static final String MODVERSION = "2.0.0";
 
+    private static final String DECIMAL_PLACES_KEY = "decimal-places";
     private static final String RENDER_KEY = "should-render";
     private static final String RENDER_DISTANCE_KEY = "render-distance";
     private static final String JUMP_KEY = "jump-threshold";
@@ -54,7 +55,7 @@ public class HorseStats
     {
         logger.info("HorseStats: pre-Initializing");
 
-//        initializeSettings();
+        initializeSettings();
     }
 
     @Mod.EventHandler
@@ -62,10 +63,12 @@ public class HorseStats
     {
         logger.info("HorseStats: Initializing");
 
-//        //Self registers with forge to receive proper events
-//        new KeyHandler();
-//
-//        MinecraftForge.EVENT_BUS.register(this);
+        decimalFormat = Util.CreateDecimalFormat((Integer)settings.getValue(DECIMAL_PLACES_KEY));
+
+        //Self registers with forge to receive proper events
+        new KeyHandler();
+
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     private boolean shouldRenderStats()
@@ -141,16 +144,14 @@ public class HorseStats
         }
     }
 
-    protected void RenderHorseOverlay(EntityHorse animal, float partialTickTime)
+    protected void RenderHorseOverlay(EntityHorse horse, float partialTickTime)
     {
-        float x = (float)animal.posX;
-        float y = (float)animal.posY;
-        float z = (float)animal.posZ;
+        float x = (float)horse.posX;
+        float y = (float)horse.posY;
+        float z = (float)horse.posZ;
 
         //a positive value means the horse has bred recently
-        int animalGrowingAge = animal.getGrowingAge();
-
-        EntityHorse horse = (EntityHorse)animal;
+        int animalGrowingAge = horse.getGrowingAge();
 
         String[] overlayText = new String[animalGrowingAge < 0 ? 4  : 3];
 
@@ -161,13 +162,13 @@ public class HorseStats
         if (animalGrowingAge < 0)
             overlayText[3] = (Util.GetHorseBabyGrowingAgeAsPercent(horse) + "%");
 
-        RenderFloatingText(overlayText, x, y, z, 0xFFFFFF, true, partialTickTime);
+        RenderFloatingText(overlayText, x, y+2.5f, z, 0xFFFFFF, true, partialTickTime);
     }
 
     private static final int TEXT_RENDER_DISTANCE = 20;
 
-    private static final float MIN_TEXT_RENDER_SCALE = 0.0075f;
-    private static final float MAX_TEXT_RENDER_SCALE = 0.04f;
+    private static final float MIN_TEXT_RENDER_SCALE = 0.02f;
+    private static final float MAX_TEXT_RENDER_SCALE = 0.05f;
 
     private static final float SCALE_STEP = (MAX_TEXT_RENDER_SCALE-MIN_TEXT_RENDER_SCALE)/TEXT_RENDER_DISTANCE;
 
@@ -262,6 +263,7 @@ public class HorseStats
 
         settings.setValueIfNotSet(RENDER_DISTANCE_KEY, 20);
         settings.setValueIfNotSet(RENDER_KEY, Boolean.TRUE);
+        settings.setValueIfNotSet(DECIMAL_PLACES_KEY, 3);
 
         settings.saveSettings();
     }
@@ -276,13 +278,12 @@ public class HorseStats
             else if(value.equalsIgnoreCase(Boolean.FALSE.toString()))
                 return Boolean.FALSE;
             else if(value.equalsIgnoreCase(Boolean.TRUE.toString()))
-                return Boolean.TRUE.toString();
+                return Boolean.TRUE;
             else
             {
                 try
                 {
-                    Integer i = Integer.parseInt(value);
-                    return i;
+                    return Integer.parseInt(value);
                 }
                 catch(NumberFormatException e)
                 {
