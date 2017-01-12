@@ -1,7 +1,9 @@
 package com.gmail.nuclearcat1337.horse_stats;
 
+import com.gmail.nuclearcat1337.horse_stats.gui.GuiHorseStats;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
@@ -16,6 +18,7 @@ public class KeyHandler
 
     public KeyHandler()
     {
+        ClientRegistry.registerKeyBinding(toggleButton);
         FMLCommonHandler.instance().bus().register(this);
     }
 
@@ -24,8 +27,7 @@ public class KeyHandler
     {
         if(toggleButton.isPressed())
         {
-            //TODO---Show the horse stats menu screen
-            Minecraft.getMinecraft().displayGuiScreen(null);
+            Minecraft.getMinecraft().displayGuiScreen(new GuiHorseStats(HorseStats.instance));
         }
     }
 }

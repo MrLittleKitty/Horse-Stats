@@ -32,7 +32,7 @@ public class Util
      * @param horse
      * @return e.x. 1.2?-5.5?
      */
-    public static double GetHorseMaxJump(EntityHorse horse)
+    public static float GetHorseMaxJump(EntityHorse horse)
     {
         //simulate gravity and air resistance to determine the jump height
         double yVelocity = horse.getHorseJumpStrength();	//horses's jump strength attribute
@@ -43,7 +43,7 @@ public class Util
             yVelocity -= 0.08;
             yVelocity *= 0.98;
         }
-        return jumpHeight;
+        return (float)jumpHeight;
     }
 
     /**
@@ -51,11 +51,11 @@ public class Util
      * @param entity
      * @return e.x. Steve = 4.3 m/s. Horses ~7-13
      */
-    public static double GetEntityMaxSpeed(EntityLivingBase entity)
+    public static float GetEntityMaxSpeed(EntityLivingBase entity)
     {
         //Steve has a movement speed of 0.1 and walks 4.3 blocks per second,
         //so multiply this result by 43 to convert to blocks per second
-        return entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue() * 43;
+        return (float)entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue() * 43;
     }
 
     /**

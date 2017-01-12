@@ -9,45 +9,45 @@ Created by Mr_Little_Kitty on 12/22/2015
 */
 public class Threshold
 {
-    private double bad,average,good;
-    public Threshold(double bad, double average, double good)
+    private float bad,average,good;
+    public Threshold(float bad, float average, float good)
     {
         this.bad = bad;
         this.average = average;
         this.good = good;
     }
 
-    public double getBad()
+    public float getBad()
     {
         return bad;
     }
 
-    public double getAverage()
+    public float getAverage()
     {
         return average;
     }
 
-    public double getGood()
+    public float getGood()
     {
         return good;
     }
 
-    public void setBad(final double bad)
+    public void setBad(final float bad)
     {
         this.bad = bad;
     }
 
-    public void setAverage(final double average)
+    public void setAverage(final float average)
     {
         this.average = average;
     }
 
-    public void setGood(final double good)
+    public void setGood(final float good)
     {
         this.good = good;
     }
 
-    public String format(DecimalFormat format, double value)
+    public String format(DecimalFormat format, float value)
     {
         String returnValue = format.format(value);
 
@@ -75,9 +75,9 @@ public class Threshold
 
         try
         {
-            double bad = Double.parseDouble(args[0]);
-            double average = Double.parseDouble(args[1]);
-            double good = Double.parseDouble(args[2]);
+            float bad = Float.parseFloat(args[0]);
+            float average = Float.parseFloat(args[1]);
+            float good = Float.parseFloat(args[2]);
 
             return new Threshold(bad,average,good);
         }

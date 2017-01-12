@@ -71,7 +71,7 @@ public class HorseStats
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    private boolean shouldRenderStats()
+    public boolean shouldRenderStats()
     {
         return (Boolean)settings.getValue(RENDER_KEY);
     }
@@ -82,23 +82,23 @@ public class HorseStats
 //        return 0;
 //    }
 
-    private int getRenderDistanceSquared()
+    public int getRenderDistanceSquared()
     {
         Integer distance = (Integer)settings.getValue(RENDER_DISTANCE_KEY);
         return distance*distance;
     }
 
-    private Threshold getSpeedThreshold()
+    public Threshold getSpeedThreshold()
     {
         return (Threshold)settings.getValue(SPEED_KEY);
     }
 
-    private Threshold getJumpThreshold()
+    public Threshold getJumpThreshold()
     {
         return (Threshold)settings.getValue(JUMP_KEY);
     }
 
-    private Threshold getHealthThreshold()
+    public Threshold getHealthThreshold()
     {
         return (Threshold)settings.getValue(HEALTH_KEY);
     }
@@ -257,8 +257,8 @@ public class HorseStats
         settings.loadSettings();
 
         //Threshold(bad,average,good)
-        settings.setValueIfNotSet(JUMP_KEY,new Threshold(2.5,4,5));
-        settings.setValueIfNotSet(SPEED_KEY,new Threshold(9.5,11,13));
+        settings.setValueIfNotSet(JUMP_KEY,new Threshold(2.5f,4,5));
+        settings.setValueIfNotSet(SPEED_KEY,new Threshold(9.5f,11,13));
         settings.setValueIfNotSet(HEALTH_KEY,new Threshold(20,24,28));
 
         settings.setValueIfNotSet(RENDER_DISTANCE_KEY, 20);
