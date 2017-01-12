@@ -9,17 +9,11 @@ Created by Mr_Little_Kitty on 12/22/2015
 */
 public class Threshold
 {
-    private float bad,average,good;
-    public Threshold(float bad, float average, float good)
+    private float average,great;
+    public Threshold(float average, float great)
     {
-        this.bad = bad;
         this.average = average;
-        this.good = good;
-    }
-
-    public float getBad()
-    {
-        return bad;
+        this.great = great;
     }
 
     public float getAverage()
@@ -27,14 +21,9 @@ public class Threshold
         return average;
     }
 
-    public float getGood()
+    public float getGreat()
     {
-        return good;
-    }
-
-    public void setBad(final float bad)
-    {
-        this.bad = bad;
+        return great;
     }
 
     public void setAverage(final float average)
@@ -42,23 +31,21 @@ public class Threshold
         this.average = average;
     }
 
-    public void setGood(final float good)
+    public void setGreat(final float great)
     {
-        this.good = good;
+        this.great = great;
     }
 
     public String format(DecimalFormat format, float value)
     {
         String returnValue = format.format(value);
 
-        if (value > getGood())
+        if (value >= getGreat()) //If its higher than the "great" point then we color it
             returnValue = ChatFormatting.AQUA + returnValue + ChatFormatting.WHITE;
-        else if (value > getAverage())
+        else if (value >= getAverage()) //If its not higher than the "great" point but its above "average", color it
             returnValue = ChatFormatting.GREEN + returnValue + ChatFormatting.WHITE;
-        else if (value < getBad())
+        else //If its below the "average" then color it for "bad"
             returnValue = ChatFormatting.RED + returnValue + ChatFormatting.WHITE;
-        else
-            returnValue = ChatFormatting.GRAY + returnValue + ChatFormatting.WHITE;
 
         return returnValue;
     }
@@ -66,22 +53,21 @@ public class Threshold
     @Override
     public String toString()
     {
-        return new StringBuilder().append(getBad()).append('-').append(getAverage()).append('-').append(getGood()).toString();
+        return new StringBuilder().append(getAverage()).append('-').append(getGreat()).toString();
     }
 
     public static Threshold fromString(String stringForm)
     {
         String[] args = stringForm.split("-");
-        if(args.length != 3)
+        if(args.length != 2)
             return null;
 
         try
         {
-            float bad = Float.parseFloat(args[0]);
-            float average = Float.parseFloat(args[1]);
-            float good = Float.parseFloat(args[2]);
+            float average = Float.parseFloat(args[0]);
+            float great = Float.parseFloat(args[1]);
 
-            return new Threshold(bad,average,good);
+            return new Threshold(average,great);
         }
         catch(NumberFormatException e)
         {

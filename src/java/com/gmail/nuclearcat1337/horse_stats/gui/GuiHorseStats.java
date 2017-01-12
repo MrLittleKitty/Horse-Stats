@@ -39,7 +39,7 @@ public class GuiHorseStats extends GuiScreen
 
         int xPos = (this.width/2) - (BUTTON_WIDTH/2) - (GuiConstants.STANDARD_SEPARATION_DISTANCE*2) - BUTTON_WIDTH;
         int yPos = (this.height/2) - (GuiConstants.STANDARD_BUTTON_HEIGHT/2) - GuiConstants.STANDARD_SEPARATION_DISTANCE - GuiConstants.STANDARD_BUTTON_HEIGHT*2; //the last *2 is so that the buttons are higher up
-        int buttonYPos = yPos + GuiConstants.STANDARD_BUTTON_HEIGHT*3 + GuiConstants.STANDARD_SEPARATION_DISTANCE*3;
+        int buttonYPos = yPos + GuiConstants.STANDARD_BUTTON_HEIGHT*2 + GuiConstants.STANDARD_SEPARATION_DISTANCE*2;
 
         layoutThresholdButtons(xPos,yPos, horseStats.getJumpThreshold(),"Jump",1,6);
 
@@ -113,36 +113,36 @@ public class GuiHorseStats extends GuiScreen
 
     private void layoutThresholdButtons(int xPos, int yPos, Threshold threshold, String name, float min, float max)
     {
-        GuiSlider goodSlider = new GuiSlider(new ThresholdRunnable(threshold,0),7,xPos,yPos,name+" Good",min,max,threshold.getGood(),formatHelper);
-        goodSlider.width = BUTTON_WIDTH;
+        GuiSlider greatSlider = new GuiSlider(new ThresholdRunnable(threshold,true),7,xPos,yPos,name+" Great",min,max,threshold.getGreat(),formatHelper);
+        greatSlider.width = BUTTON_WIDTH;
         //GuiSlider goodSlider = new GuiSlider(1,xPos,yPos,BUTTON_WIDTH,GuiConstants.STANDARD_BUTTON_HEIGHT,name+" Good",threshold.getGood(), min,max, valueStep, new ThresholdRunnable(threshold,0));
 
-        yPos += goodSlider.height + GuiConstants.STANDARD_SEPARATION_DISTANCE;
+        yPos += greatSlider.height + GuiConstants.STANDARD_SEPARATION_DISTANCE;
 
-        GuiSlider averageSlider = new GuiSlider(new ThresholdRunnable(threshold,1),8,xPos,yPos,name+" Avg",min,max,threshold.getAverage(),formatHelper);
+        GuiSlider averageSlider = new GuiSlider(new ThresholdRunnable(threshold,false),8,xPos,yPos,name+" Avg",min,max,threshold.getAverage(),formatHelper);
         averageSlider.width = BUTTON_WIDTH;
         //GuiSlider averageSlider = new GuiSlider(2,xPos,yPos,BUTTON_WIDTH,GuiConstants.STANDARD_BUTTON_HEIGHT,name+" Average", threshold.getAverage(), min,max, valueStep, new ThresholdRunnable(threshold,1));
 
-        yPos += averageSlider.height + GuiConstants.STANDARD_SEPARATION_DISTANCE;
-
-        GuiSlider badSlider = new GuiSlider(new ThresholdRunnable(threshold,2),9,xPos,yPos,name+" Bad",min,max,threshold.getBad(),formatHelper);
-        badSlider.width = BUTTON_WIDTH;
+//        yPos += averageSlider.height + GuiConstants.STANDARD_SEPARATION_DISTANCE;
+//
+//        GuiSlider badSlider = new GuiSlider(new ThresholdRunnable(threshold,2),9,xPos,yPos,name+" Bad",min,max,threshold.getBad(),formatHelper);
+//        badSlider.width = BUTTON_WIDTH;
         //GuiSlider badSlider = new GuiSlider(3,xPos,yPos,BUTTON_WIDTH,GuiConstants.STANDARD_BUTTON_HEIGHT,name+" Bad",threshold.getBad(), min,max,valueStep, new ThresholdRunnable(threshold,2));
 
-        buttonList.add(goodSlider);
+        buttonList.add(greatSlider);
         buttonList.add(averageSlider);
-        buttonList.add(badSlider);
+        //buttonList.add(badSlider);
     }
 
     private static class ThresholdRunnable implements GuiPageButtonList.GuiResponder
     {
         private final Threshold threshold;
-        private final int value;
+        private final boolean great;
 
-        public ThresholdRunnable(Threshold threshold, int value)
+        public ThresholdRunnable(Threshold threshold, boolean great)
         {
             this.threshold = threshold;
-            this.value = value;
+            this.great = great;
         }
 
         @Override
@@ -154,12 +154,10 @@ public class GuiHorseStats extends GuiScreen
         @Override
         public void setEntryValue(int id, float value)
         {
-            if(this.value == 0)
-                threshold.setGood(value);
-            else if(this.value == 1)
-                threshold.setAverage(value);
+            if(this.great)
+                threshold.setGreat(value);
             else
-                threshold.setBad(value);
+                threshold.setAverage(value);
         }
 
         @Override

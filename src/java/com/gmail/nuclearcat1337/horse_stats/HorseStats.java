@@ -82,6 +82,11 @@ public class HorseStats
         return (Boolean)settings.getValue(RENDER_KEY);
     }
 
+    public int getRenderDistance()
+    {
+        return (Integer)settings.getValue(RENDER_DISTANCE_KEY);
+    }
+
     public int getRenderDistanceSquared()
     {
         Integer distance = (Integer)settings.getValue(RENDER_DISTANCE_KEY);
@@ -257,9 +262,9 @@ public class HorseStats
         settings.loadSettings();
 
         //Threshold(bad,average,good)
-        settings.setValueIfNotSet(JUMP_KEY,new Threshold(2.5f,4,5));
-        settings.setValueIfNotSet(SPEED_KEY,new Threshold(9.5f,11,13));
-        settings.setValueIfNotSet(HEALTH_KEY,new Threshold(20,24,28));
+        settings.setValueIfNotSet(JUMP_KEY,new Threshold(4,5));
+        settings.setValueIfNotSet(SPEED_KEY,new Threshold(11,13));
+        settings.setValueIfNotSet(HEALTH_KEY,new Threshold(24,28));
 
         settings.setValueIfNotSet(RENDER_DISTANCE_KEY, 20);
         settings.setValueIfNotSet(RENDER_KEY, Boolean.TRUE);
