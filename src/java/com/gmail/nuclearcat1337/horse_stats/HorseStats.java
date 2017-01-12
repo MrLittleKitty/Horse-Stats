@@ -47,9 +47,13 @@ public class HorseStats
     public static Logger logger = Logger.getLogger("HorseStats");
 
     private Settings settings;
-
     private DecimalFormat decimalFormat;
 
+    private static final float MIN_TEXT_RENDER_SCALE = 0.02f;
+    private static final float MAX_TEXT_RENDER_SCALE = 0.06f;
+
+    private float renderDistance;
+    private static final float scale_step = (MAX_TEXT_RENDER_SCALE-MIN_TEXT_RENDER_SCALE)/30;
 
     @Mod.EventHandler
     public void preInitialize(FMLPreInitializationEvent event)
@@ -57,6 +61,8 @@ public class HorseStats
         logger.info("HorseStats: pre-Initializing");
 
         initializeSettings();
+
+        updateRenderDistance();
     }
 
     @Mod.EventHandler
@@ -72,6 +78,11 @@ public class HorseStats
         MinecraftForge.EVENT_BUS.register(this);
     }
 
+    public void updateRenderDistance()
+    {
+        renderDistance = (Float)settings.getValue(RENDER_DISTANCE_KEY);
+    }
+
     public Settings getSettings()
     {
         return settings;
@@ -82,15 +93,14 @@ public class HorseStats
         return (Boolean)settings.getValue(RENDER_KEY);
     }
 
-    public int getRenderDistance()
+    public float getRenderDistance()
     {
-        return (Integer)settings.getValue(RENDER_DISTANCE_KEY);
+        return renderDistance;
     }
 
-    public int getRenderDistanceSquared()
+    public float getRenderDistanceSquared()
     {
-        Integer distance = (Integer)settings.getValue(RENDER_DISTANCE_KEY);
-        return distance*distance;
+        return renderDistance*renderDistance;
     }
 
     public Threshold getSpeedThreshold()
@@ -170,14 +180,7 @@ public class HorseStats
         RenderFloatingText(overlayText, x, y+2.5f, z, 0xFFFFFF, true, partialTickTime);
     }
 
-    private static final int TEXT_RENDER_DISTANCE = 20;
-
-    private static final float MIN_TEXT_RENDER_SCALE = 0.02f;
-    private static final float MAX_TEXT_RENDER_SCALE = 0.05f;
-
-    private static final float SCALE_STEP = (MAX_TEXT_RENDER_SCALE-MIN_TEXT_RENDER_SCALE)/TEXT_RENDER_DISTANCE;
-
-    private static void RenderFloatingText(String[] text, float x, float y, float z, int color, boolean renderBlackBackground, float partialTickTime)
+    private void RenderFloatingText(String[] text, float x, float y, float z, int color, boolean renderBlackBackground, float partialTickTime)
     {
         //Thanks to Electric-Expansion mod for the majority of this code
         //https://github.com/Alex-hawks/Electric-Expansion/blob/master/src/electricexpansion/client/render/RenderFloatingText.java
@@ -192,7 +195,7 @@ public class HorseStats
         float dy = y-playerY;
         float dz = z-playerZ;
         float distance = (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
-        float scale = MIN_TEXT_RENDER_SCALE + (distance*SCALE_STEP);//.01f; //Min font scale for max text render distance
+        float scale = MIN_TEXT_RENDER_SCALE + (distance*scale_step);//.01f; //Min font scale for max text render distance
 
         GL11.glColor4f(1f, 1f, 1f, 0.5f);
         GL11.glPushMatrix();
@@ -266,7 +269,7 @@ public class HorseStats
         settings.setValueIfNotSet(SPEED_KEY,new Threshold(11,13));
         settings.setValueIfNotSet(HEALTH_KEY,new Threshold(24,28));
 
-        settings.setValueIfNotSet(RENDER_DISTANCE_KEY, 20);
+        settings.setValueIfNotSet(RENDER_DISTANCE_KEY, 15.0F);
         settings.setValueIfNotSet(RENDER_KEY, Boolean.TRUE);
         settings.setValueIfNotSet(DECIMAL_PLACES_KEY, 3);
 
@@ -284,6 +287,8 @@ public class HorseStats
                 return Boolean.FALSE;
             else if(value.equalsIgnoreCase(Boolean.TRUE.toString()))
                 return Boolean.TRUE;
+            else if(key.equalsIgnoreCase(RENDER_DISTANCE_KEY))
+                return Float.parseFloat(value);
             else
             {
                 try

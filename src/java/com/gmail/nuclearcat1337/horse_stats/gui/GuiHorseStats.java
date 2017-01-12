@@ -55,6 +55,8 @@ public class GuiHorseStats extends GuiScreen
 
         layoutThresholdButtons(xPos,yPos, horseStats.getSpeedThreshold(),"Speed",8,15);
 
+        buttonList.add(new GuiSlider(renderDistanceResponder,10,xPos,buttonYPos,"Render Distance",2,30,horseStats.getRenderDistance(),renderDistanceFormatter));
+
         super.initGui();
     }
 
@@ -88,8 +90,10 @@ public class GuiHorseStats extends GuiScreen
                 boolean nextState = !horseStats.shouldRenderStats();
                 horseStats.getSettings().setValue(HorseStats.RENDER_KEY,nextState);
                 button.displayString = "Overlay Render: "+(nextState ? "On" : "Off");
+                horseStats.getSettings().saveSettings();
                 break;
             case 1:
+                horseStats.getSettings().saveSettings();
                 Minecraft.getMinecraft().displayGuiScreen(null);
                 break;
         }
@@ -100,6 +104,42 @@ public class GuiHorseStats extends GuiScreen
     {
         return false;
     }
+
+    @Override
+    public void onGuiClosed()
+    {
+        horseStats.getSettings().saveSettings();
+    }
+
+    private final GuiPageButtonList.GuiResponder renderDistanceResponder = new GuiPageButtonList.GuiResponder()
+    {
+        @Override
+        public void setEntryValue(int id, boolean value)
+        {
+
+        }
+
+        @Override
+        public void setEntryValue(int id, float value)
+        {
+            horseStats.getSettings().setValue(HorseStats.RENDER_DISTANCE_KEY,value);
+            horseStats.updateRenderDistance();
+        }
+
+        @Override
+        public void setEntryValue(int id, String value)
+        {
+
+        }
+    };
+    private final GuiSlider.FormatHelper renderDistanceFormatter = new GuiSlider.FormatHelper()
+    {
+        @Override
+        public String getText(int id, String name, float value)
+        {
+            return name+": "+(int)(value)+" blocks";
+        }
+    };
 
     private static final DecimalFormat format = new DecimalFormat("#.0");
     private static final GuiSlider.FormatHelper formatHelper = new GuiSlider.FormatHelper()
