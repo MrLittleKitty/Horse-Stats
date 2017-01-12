@@ -19,6 +19,7 @@ import org.lwjgl.opengl.GL11;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /*
@@ -31,12 +32,12 @@ public class HorseStats
     public static final String MODNAME = "Horse Stats";
     public static final String MODVERSION = "2.0.0";
 
-    private static final String DECIMAL_PLACES_KEY = "decimal-places";
-    private static final String RENDER_KEY = "should-render";
-    private static final String RENDER_DISTANCE_KEY = "render-distance";
-    private static final String JUMP_KEY = "jump-threshold";
-    private static final String SPEED_KEY = "speed-threshold";
-    private static final String HEALTH_KEY = "health-threshold";
+    public static final String DECIMAL_PLACES_KEY = "decimal-places";
+    public static final String RENDER_KEY = "should-render";
+    public static final String RENDER_DISTANCE_KEY = "render-distance";
+    public static final String JUMP_KEY = "jump-threshold";
+    public static final String SPEED_KEY = "speed-threshold";
+    public static final String HEALTH_KEY = "health-threshold";
 
     private static Minecraft mc = Minecraft.getMinecraft();
     private static final String modSettingsFile = mc.mcDataDir+"/mods/"+MODNAME+"/Settings.txt";
@@ -71,16 +72,15 @@ public class HorseStats
         MinecraftForge.EVENT_BUS.register(this);
     }
 
+    public Settings getSettings()
+    {
+        return settings;
+    }
+
     public boolean shouldRenderStats()
     {
         return (Boolean)settings.getValue(RENDER_KEY);
     }
-
-//    private int getMaxNumberOfOverlays()
-//    {
-//        //TODO---This is a placeholder method and needs to use a config for some shit
-//        return 0;
-//    }
 
     public int getRenderDistanceSquared()
     {

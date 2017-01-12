@@ -57,6 +57,8 @@ public class Threshold
             returnValue = ChatFormatting.GREEN + returnValue + ChatFormatting.WHITE;
         else if (value < getBad())
             returnValue = ChatFormatting.RED + returnValue + ChatFormatting.WHITE;
+        else
+            returnValue = ChatFormatting.GRAY + returnValue + ChatFormatting.WHITE;
 
         return returnValue;
     }
