@@ -188,7 +188,7 @@ public class HorseStats
         RenderFloatingText(overlayText, x, y+1.3f, z, 0xFFFFFF, true, partialTickTime);
     }
 
-    private void RenderFloatingText(String[] text, float x, float y, float z, int color, boolean renderBlackBackground, float partialTickTime)
+    public void RenderFloatingText(String[] text, float x, float y, float z, int color, boolean renderBlackBackground, float partialTickTime)
     {
         //Thanks to Electric-Expansion mod for the majority of this code
         //https://github.com/Alex-hawks/Electric-Expansion/blob/master/src/electricexpansion/client/render/RenderFloatingText.java
@@ -240,10 +240,10 @@ public class HorseStats
 
             //This code taken from 1.8.8 net.minecraft.client.renderer.entity.Render.renderLivingLabel()
             vertexBuffer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-            vertexBuffer.pos((double) (-stringMiddle - 1), (double) (-1) -initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-            vertexBuffer.pos((double) (-stringMiddle - 1), (double) (8 + lineHeight*(text.length-1) -initialValue), 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-            vertexBuffer.pos((double) (stringMiddle + 1), (double) (8 + lineHeight*(text.length-1) -initialValue), 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-            vertexBuffer.pos((double) (stringMiddle + 1), (double) (-1) - initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
+            vertexBuffer.pos((double) (-stringMiddle - 1), (double) (-1)-initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
+            vertexBuffer.pos((double) (-stringMiddle - 1), (double) (8 + lineHeight*(text.length-1))-initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
+            vertexBuffer.pos((double) (stringMiddle + 1), (double) (8 + lineHeight*(text.length-1))-initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
+            vertexBuffer.pos((double) (stringMiddle + 1), (double) (-1)-initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
 
             tessellator.draw();
 
@@ -253,8 +253,7 @@ public class HorseStats
         int i = 0;
         for(String message : text)
         {
-            int messageWidth = mc.fontRendererObj.getStringWidth(message);
-            mc.fontRendererObj.drawString(message,  0-(messageWidth / 2),(i*lineHeight) - initialValue, color);
+            mc.fontRendererObj.drawString(message, -textWidth / 2, (i*lineHeight)-initialValue, color);
             i++;
         }
 
