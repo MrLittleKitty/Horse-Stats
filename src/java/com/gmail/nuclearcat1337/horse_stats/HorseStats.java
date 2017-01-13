@@ -69,12 +69,22 @@ public class HorseStats
     {
         logger.info("HorseStats: Initializing");
 
-        decimalFormat = Util.CreateDecimalFormat((Integer)settings.getValue(DECIMAL_PLACES_KEY));
+        updateDecimalPlaces();
 
         //Self registers with forge to receive proper events
         new KeyHandler();
 
         MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    public void updateDecimalPlaces()
+    {
+        decimalFormat = Util.CreateDecimalFormat((Integer)settings.getValue(DECIMAL_PLACES_KEY));
+    }
+
+    public int getDecimalPlaces()
+    {
+        return (Integer)settings.getValue(DECIMAL_PLACES_KEY);
     }
 
     public void updateRenderDistance()
@@ -116,7 +126,6 @@ public class HorseStats
     {
         return (Threshold)settings.getValue(HEALTH_KEY);
     }
-
 
     @SubscribeEvent
     public void RenderWorldLastEvent(RenderWorldLastEvent event)

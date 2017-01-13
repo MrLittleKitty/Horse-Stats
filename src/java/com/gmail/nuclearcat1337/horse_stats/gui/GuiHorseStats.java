@@ -39,23 +39,24 @@ public class GuiHorseStats extends GuiScreen
 
         int xPos = (this.width/2) - (BUTTON_WIDTH/2) - (GuiConstants.STANDARD_SEPARATION_DISTANCE*2) - BUTTON_WIDTH;
         int yPos = (this.height/2) - (GuiConstants.STANDARD_BUTTON_HEIGHT/2) - GuiConstants.STANDARD_SEPARATION_DISTANCE - GuiConstants.STANDARD_BUTTON_HEIGHT*2; //the last *2 is so that the buttons are higher up
-        int buttonYPos = yPos + GuiConstants.STANDARD_BUTTON_HEIGHT*2 + GuiConstants.STANDARD_SEPARATION_DISTANCE*2;
+        int buttonYPos1 = yPos + GuiConstants.STANDARD_BUTTON_HEIGHT*3 + GuiConstants.STANDARD_SEPARATION_DISTANCE*3;
+        int buttonYPos2 = buttonYPos1 + GuiConstants.STANDARD_BUTTON_HEIGHT + GuiConstants.STANDARD_SEPARATION_DISTANCE;
 
         layoutThresholdButtons(xPos,yPos, horseStats.getJumpThreshold(),"Jump",1,6);
 
-        buttonList.add(new GuiButton(0,xPos,buttonYPos,BUTTON_WIDTH,GuiConstants.STANDARD_BUTTON_HEIGHT,"Overlay Render: "+(horseStats.shouldRenderStats() ? "On" : "Off")));
+        buttonList.add(new GuiSlider(renderDistanceResponder,10,xPos,buttonYPos1,"Render Distance",2,30,horseStats.getRenderDistance(),renderDistanceFormatter));
+        buttonList.add(new GuiButton(0,xPos,buttonYPos2,BUTTON_WIDTH,GuiConstants.STANDARD_BUTTON_HEIGHT,"Overlay Render: "+(horseStats.shouldRenderStats() ? "On" : "Off")));
 
         xPos += BUTTON_WIDTH + GuiConstants.STANDARD_SEPARATION_DISTANCE*2;
 
         layoutThresholdButtons(xPos,yPos, horseStats.getHealthThreshold(),"Health",18,32);
 
-        buttonList.add(new GuiButton(1,xPos,buttonYPos,BUTTON_WIDTH,GuiConstants.STANDARD_BUTTON_HEIGHT,"Done"));
+        buttonList.add(new GuiSlider(decimalPlacesResponder,11,xPos,buttonYPos1,"Decimal Places",1,10,horseStats.getDecimalPlaces(),decimalPlacesFormatter));
+        buttonList.add(new GuiButton(1,xPos,buttonYPos2,BUTTON_WIDTH,GuiConstants.STANDARD_BUTTON_HEIGHT,"Done"));
 
         xPos += BUTTON_WIDTH + GuiConstants.STANDARD_SEPARATION_DISTANCE*2;
 
         layoutThresholdButtons(xPos,yPos, horseStats.getSpeedThreshold(),"Speed",8,15);
-
-        buttonList.add(new GuiSlider(renderDistanceResponder,10,xPos,buttonYPos,"Render Distance",2,30,horseStats.getRenderDistance(),renderDistanceFormatter));
 
         super.initGui();
     }
@@ -84,6 +85,7 @@ public class GuiHorseStats extends GuiScreen
     {
         if(!button.enabled)
             return;
+
         switch(button.id)
         {
             case 0:
@@ -111,6 +113,28 @@ public class GuiHorseStats extends GuiScreen
         horseStats.getSettings().saveSettings();
     }
 
+    private final GuiPageButtonList.GuiResponder decimalPlacesResponder = new GuiPageButtonList.GuiResponder()
+    {
+        @Override
+        public void setEntryValue(int id, boolean value)
+        {
+
+        }
+
+        @Override
+        public void setEntryValue(int id, float value)
+        {
+            horseStats.getSettings().setValue(HorseStats.DECIMAL_PLACES_KEY,(int)value);
+            horseStats.updateDecimalPlaces();
+        }
+
+        @Override
+        public void setEntryValue(int id, String value)
+        {
+
+        }
+    };
+
     private final GuiPageButtonList.GuiResponder renderDistanceResponder = new GuiPageButtonList.GuiResponder()
     {
         @Override
@@ -132,6 +156,16 @@ public class GuiHorseStats extends GuiScreen
 
         }
     };
+
+    private final GuiSlider.FormatHelper decimalPlacesFormatter = new GuiSlider.FormatHelper()
+    {
+        @Override
+        public String getText(int id, String name, float value)
+        {
+            return name +": "+(int)value+" decimals";
+        }
+    };
+
     private final GuiSlider.FormatHelper renderDistanceFormatter = new GuiSlider.FormatHelper()
     {
         @Override
@@ -155,23 +189,14 @@ public class GuiHorseStats extends GuiScreen
     {
         GuiSlider greatSlider = new GuiSlider(new ThresholdRunnable(threshold,true),7,xPos,yPos,name+" Great",min,max,threshold.getGreat(),formatHelper);
         greatSlider.width = BUTTON_WIDTH;
-        //GuiSlider goodSlider = new GuiSlider(1,xPos,yPos,BUTTON_WIDTH,GuiConstants.STANDARD_BUTTON_HEIGHT,name+" Good",threshold.getGood(), min,max, valueStep, new ThresholdRunnable(threshold,0));
 
         yPos += greatSlider.height + GuiConstants.STANDARD_SEPARATION_DISTANCE;
 
         GuiSlider averageSlider = new GuiSlider(new ThresholdRunnable(threshold,false),8,xPos,yPos,name+" Avg",min,max,threshold.getAverage(),formatHelper);
         averageSlider.width = BUTTON_WIDTH;
-        //GuiSlider averageSlider = new GuiSlider(2,xPos,yPos,BUTTON_WIDTH,GuiConstants.STANDARD_BUTTON_HEIGHT,name+" Average", threshold.getAverage(), min,max, valueStep, new ThresholdRunnable(threshold,1));
-
-//        yPos += averageSlider.height + GuiConstants.STANDARD_SEPARATION_DISTANCE;
-//
-//        GuiSlider badSlider = new GuiSlider(new ThresholdRunnable(threshold,2),9,xPos,yPos,name+" Bad",min,max,threshold.getBad(),formatHelper);
-//        badSlider.width = BUTTON_WIDTH;
-        //GuiSlider badSlider = new GuiSlider(3,xPos,yPos,BUTTON_WIDTH,GuiConstants.STANDARD_BUTTON_HEIGHT,name+" Bad",threshold.getBad(), min,max,valueStep, new ThresholdRunnable(threshold,2));
 
         buttonList.add(greatSlider);
         buttonList.add(averageSlider);
-        //buttonList.add(badSlider);
     }
 
     private static class ThresholdRunnable implements GuiPageButtonList.GuiResponder
