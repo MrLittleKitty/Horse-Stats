@@ -19,7 +19,6 @@ import org.lwjgl.opengl.GL11;
 
 import java.io.File;
 import java.text.DecimalFormat;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /*
@@ -177,7 +176,7 @@ public class HorseStats
         if (animalGrowingAge < 0)
             overlayText[3] = (Util.GetHorseBabyGrowingAgeAsPercent(horse) + "%");
 
-        RenderFloatingText(overlayText, x, y+2.5f, z, 0xFFFFFF, true, partialTickTime);
+        RenderFloatingText(overlayText, x, y+1.3f, z, 0xFFFFFF, true, partialTickTime);
     }
 
     private void RenderFloatingText(String[] text, float x, float y, float z, int color, boolean renderBlackBackground, float partialTickTime)
@@ -219,22 +218,23 @@ public class HorseStats
         }
 
         int lineHeight = 10;
+        int initialValue = lineHeight*text.length;
 
         if(renderBlackBackground)
         {
             int stringMiddle = textWidth / 2;
 
             Tessellator tessellator = Tessellator.getInstance();
-            VertexBuffer worldrenderer = tessellator.getBuffer();
+            VertexBuffer vertexBuffer = tessellator.getBuffer();
 
             GlStateManager.disableTexture2D();
 
             //This code taken from 1.8.8 net.minecraft.client.renderer.entity.Render.renderLivingLabel()
-            worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-            worldrenderer.pos((double) (-stringMiddle - 1), (double) (-1), 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-            worldrenderer.pos((double) (-stringMiddle - 1), (double) (8 + lineHeight*(text.length-1)), 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-            worldrenderer.pos((double) (stringMiddle + 1), (double) (8 + lineHeight*(text.length-1)), 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-            worldrenderer.pos((double) (stringMiddle + 1), (double) (-1), 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
+            vertexBuffer.begin(7, DefaultVertexFormats.POSITION_COLOR);
+            vertexBuffer.pos((double) (-stringMiddle - 1), (double) (-1) -initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
+            vertexBuffer.pos((double) (-stringMiddle - 1), (double) (8 + lineHeight*(text.length-1) -initialValue), 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
+            vertexBuffer.pos((double) (stringMiddle + 1), (double) (8 + lineHeight*(text.length-1) -initialValue), 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
+            vertexBuffer.pos((double) (stringMiddle + 1), (double) (-1) - initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
 
             tessellator.draw();
 
@@ -245,7 +245,7 @@ public class HorseStats
         for(String message : text)
         {
             int messageWidth = mc.fontRendererObj.getStringWidth(message);
-            mc.fontRendererObj.drawString(message,  0-(messageWidth / 2), i*lineHeight, color);
+            mc.fontRendererObj.drawString(message,  0-(messageWidth / 2),(i*lineHeight) - initialValue, color);
             i++;
         }
 
