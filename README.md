@@ -2,7 +2,7 @@
 Horse Stats --- A Minecraft mod that renders the attributes of horses over their heads.
 
 #Current Version
-Minecraft 1.10.2 --- [Release v2.0.0](https://github.com/MrLittleKitty/Horse-Stats/releases/tag/v2.0.0)
+Minecraft 1.10.2 --- [Release v2.0.1](https://github.com/MrLittleKitty/Horse-Stats/releases/tag/v2.0.1) (NEW!)
 
 #Screenshots
 ![Rendered horse attributes](http://i.imgur.com/yRnxAaD.png)
@@ -13,6 +13,8 @@ Minecraft 1.10.2 --- [Release v2.0.0](https://github.com/MrLittleKitty/Horse-Sta
 
 
 # All Downloads
+
+Minecraft 1.10.2 --- [Release v2.0.1](https://github.com/MrLittleKitty/Horse-Stats/releases/tag/v2.0.1)
 
 Minecraft 1.10.2 --- [Release v2.0.0](https://github.com/MrLittleKitty/Horse-Stats/releases/tag/v2.0.0)
 
