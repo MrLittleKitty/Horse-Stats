@@ -20,12 +20,12 @@ plugins {
     id "net.minecraftforge.gradle.forge" version "2.0.2"
 }
 */
-version = "1.10.2-2.0.0"
+version = "1.10.2-2.0.1"
 group= "com.gmail.nuclearcat1337.horse_stats" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "HorseStats"
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 minecraft {
     version = "1.10.2-12.18.3.2185"
@@ -59,3 +59,10 @@ processResources
                 exclude 'mcmod.info'
             }
         }
+
+sourceSets {
+    main {
+        java { srcDirs = ["$projectDir/src/java"] }
+        resources { srcDirs = ["$projectDir/src/resources"] }
+    }
+}
