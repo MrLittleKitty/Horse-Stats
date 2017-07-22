@@ -178,14 +178,15 @@ public class HorseStats
         //a positive value means the horse has bred recently
         int animalGrowingAge = horse.getGrowingAge();
 
-        String[] overlayText = new String[animalGrowingAge < 0 ? 4  : 3];
+        String[] overlayText = new String[animalGrowingAge < 0 ? 5  : 4];
 
         overlayText[0] = (getSpeedThreshold().format(decimalFormat,Util.GetEntityMaxSpeed(horse)) +" m/s");
         overlayText[1] = (getHealthThreshold().format(decimalFormat,Util.GetEntityMaxHP(horse)) + " hp");
         overlayText[2] = (getJumpThreshold().format(decimalFormat,Util.GetHorseMaxJump(horse)) + " jump");
+        overlayText[3] = Util.GetHorseMarkingText(horse) + " " + Util.GetHorseColoringText(horse);
 
         if (animalGrowingAge < 0)
-            overlayText[3] = (Util.GetHorseBabyGrowingAgeAsPercent(horse) + "%");
+            overlayText[4] = (Util.GetHorseBabyGrowingAgeAsPercent(horse) + "%");
 
         RenderFloatingText(overlayText, x, y+1.3f, z, 0xFFFFFF, true, partialTickTime);
     }

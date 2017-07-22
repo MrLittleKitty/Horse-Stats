@@ -30,3 +30,4 @@
 
 ## File-based project format:
 *.iws
+/.nb-gradle/

@@ -5,6 +5,7 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.passive.EntityHorse;
 
 import java.text.DecimalFormat;
+import org.apache.commons.lang3.text.WordUtils;
 
 /**
  * Created by Mr_Little_Kitty on 1/10/2017.
@@ -77,5 +78,50 @@ public class Util
     {
         float horseGrowingAge = horse.getHorseSize();	//horse size ranges from 0.5 to 1
         return (int)((horseGrowingAge - 0.5f) * 2.0f * 100f);
+    }
+    
+    /**
+     * Gets a horses primary coloring
+     *
+     * @param horse
+     * @return empty string if there is no coloring (for donkeys)
+     */
+    public static String GetHorseColoringText(EntityHorse horse) {
+        String texture = "";
+        if (horse instanceof EntityHorse) {
+            texture = ((EntityHorse) horse).getVariantTexturePaths()[0];
+        }
+
+        if (texture == null || texture.isEmpty())
+            return "";
+
+        String[] textureArray = texture.split("/");            //"textures/entity/horse/horse_creamy.png"
+        texture = textureArray[textureArray.length - 1];        //"horse_creamy.png"
+        texture = texture.substring(6, texture.length() - 4);    //"creamy"
+        texture = WordUtils.capitalize(texture);            //"Creamy"
+
+        return texture;
+    }
+
+    /**
+     * Gets a horses secondary coloring
+     *
+     * @param horse
+     * @return empty string if there is no secondary coloring (for donkeys)
+     */
+    public static String GetHorseMarkingText(EntityHorse horse) {
+        String texture = "";
+        if (horse instanceof EntityHorse) {
+            texture = ((EntityHorse) horse).getVariantTexturePaths()[1];
+        }
+        if (texture == null || texture.isEmpty())
+            return "";
+
+        String[] textureArray = texture.split("/");                //"textures/entity/horse/horse_markings_blackdots.png"
+        texture = textureArray[textureArray.length - 1];            //"horse_markings_blackdots.png"
+        texture = texture.substring(15, texture.length() - 4);    //"blackdots"
+        texture = WordUtils.capitalize(texture);                //"Blackdots"
+
+        return texture;
     }
 }
