@@ -5,6 +5,10 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.passive.EntityHorse;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.text.WordUtils;
 
 /**
@@ -16,7 +20,7 @@ public class Util
      * Gets the amount of decimals that should be displayed with a DecimalFormat object.
      * @return
      */
-    public static DecimalFormat CreateDecimalFormat(int numberOfDecimalsDisplayed)
+    public static DecimalFormat createDecimalFormat(int numberOfDecimalsDisplayed)
     {
         if(numberOfDecimalsDisplayed < 1)
             return new DecimalFormat("#");
@@ -33,7 +37,7 @@ public class Util
      * @param horse
      * @return e.x. 1.2?-5.5?
      */
-    public static float GetHorseMaxJump(EntityHorse horse)
+    public static float getHorseMaxJump(EntityHorse horse)
     {
         //simulate gravity and air resistance to determine the jump height
         double yVelocity = horse.getHorseJumpStrength();	//horses's jump strength attribute
@@ -52,7 +56,7 @@ public class Util
      * @param entity
      * @return e.x. Steve = 4.3 m/s. Horses ~7-13
      */
-    public static float GetEntityMaxSpeed(EntityLivingBase entity)
+    public static float getEntityMaxSpeed(EntityLivingBase entity)
     {
         //Steve has a movement speed of 0.1 and walks 4.3 blocks per second,
         //so multiply this result by 43 to convert to blocks per second
@@ -64,7 +68,7 @@ public class Util
      * @param entity
      * @return e.x. Steve = 20 hit points
      */
-    public static int GetEntityMaxHP(EntityLivingBase entity)
+    public static int getEntityMaxHP(EntityLivingBase entity)
     {
         return (int) entity.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).getAttributeValue();
     }
@@ -74,54 +78,49 @@ public class Util
      * @param horse
      * @return
      */
-    public static int GetHorseBabyGrowingAgeAsPercent(EntityHorse horse)
+    public static int getHorseBabyGrowingAgeAsPercent(EntityHorse horse)
     {
         float horseGrowingAge = horse.getHorseSize();	//horse size ranges from 0.5 to 1
         return (int)((horseGrowingAge - 0.5f) * 2.0f * 100f);
     }
     
     /**
-     * Gets a horses primary coloring
+     * Gets a horses  coloring
      *
      * @param horse
-     * @return empty string if there is no coloring (for donkeys)
+     * @return empty string if there is no coloring
      */
-    public static String GetHorseColoringText(EntityHorse horse) {
-        String texture = "";
-        if (horse instanceof EntityHorse) {
-            texture = ((EntityHorse) horse).getVariantTexturePaths()[0];
-        }
-
-        if (texture == null || texture.isEmpty())
-            return "";
-
-        String[] textureArray = texture.split("/");            //"textures/entity/horse/horse_creamy.png"
-        texture = textureArray[textureArray.length - 1];        //"horse_creamy.png"
-        texture = texture.substring(6, texture.length() - 4);    //"creamy"
-        texture = WordUtils.capitalize(texture);            //"Creamy"
-
-        return texture;
+    public static String getHorseMarkingText(EntityHorse horse) {
+            return Arrays.stream(horse.getVariantTexturePaths())
+                .filter(s->s != null)
+                .map(s -> s.split("[\\p{Punct}\\s]+"))
+                .filter(a -> a.length > 2)
+                .map(a -> a[a.length - 2])
+                .reduce((a, b) -> String.join(" ", b, a))
+                .map(WordUtils::capitalizeFully)
+                .orElse("");
     }
 
-    /**
-     * Gets a horses secondary coloring
-     *
-     * @param horse
-     * @return empty string if there is no secondary coloring (for donkeys)
-     */
-    public static String GetHorseMarkingText(EntityHorse horse) {
-        String texture = "";
-        if (horse instanceof EntityHorse) {
-            texture = ((EntityHorse) horse).getVariantTexturePaths()[1];
-        }
-        if (texture == null || texture.isEmpty())
-            return "";
-
-        String[] textureArray = texture.split("/");                //"textures/entity/horse/horse_markings_blackdots.png"
-        texture = textureArray[textureArray.length - 1];            //"horse_markings_blackdots.png"
-        texture = texture.substring(15, texture.length() - 4);    //"blackdots"
-        texture = WordUtils.capitalize(texture);                //"Blackdots"
-
-        return texture;
+    public static String getCurrentHealth(EntityHorse horse) {
+        return String.format("%.1f/", (float) ((int) (horse.getHealth() * 2)) / 2.0F);
     }
+
+    public static String getHorseDetails(EntityHorse horse, Long childAge, Long sinceBreeding) {
+        final List<String> details = new ArrayList<>();
+        if (!horse.isChild()) {
+            details.add(!horse.isTame() ? "Wild" : "Tamed");
+        }
+        details.add(horse.isChild() ? "Foal" : "Adult");
+        details.add(WordUtils.capitalizeFully(horse.getType().toString()));
+        if (sinceBreeding != null) {
+            details.add("Bred " + ((System.currentTimeMillis() - sinceBreeding) / 1000) + "s");
+        }
+        if (childAge != null) {
+            details.add("Age " + (System.currentTimeMillis() - childAge) / 1000 + "s");
+        }
+        details.addAll(horse.getTags());
+        return String.join(" ", details.toArray(new String[]{}));
+    }
+
+
 }

@@ -1,7 +1,6 @@
 package com.gmail.nuclearcat1337.horse_stats;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -9,8 +8,6 @@ import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.passive.EntityHorse;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -21,14 +18,21 @@ import org.lwjgl.opengl.GL11;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
+import net.minecraft.entity.passive.HorseType;
+import org.apache.commons.lang3.StringUtils;
 
 /*
 Created by Mr_Little_Kitty on 12/17/2015
-*/
+ */
 @Mod(modid = HorseStats.MODID, name = HorseStats.MODNAME, version = HorseStats.MODVERSION)
 public class HorseStats
 {
+
     public static final String MODID = "horsestats";
     public static final String MODNAME = "Horse Stats";
     public static final String MODVERSION = "2.0.0";
@@ -41,11 +45,14 @@ public class HorseStats
     public static final String HEALTH_KEY = "health-threshold";
 
     private static Minecraft mc = Minecraft.getMinecraft();
-    private static final String modSettingsFile = mc.mcDataDir+"/mods/"+MODNAME+"/Settings.txt";
+    private static final String modSettingsFile = mc.mcDataDir + "/mods/" + MODNAME + "/Settings.txt";
+    private static final long HORSE_WAIT_SECONDS = 5 * 60 * 1000;
 
     @Mod.Instance(MODID)
     public static HorseStats instance;
     public static Logger logger = Logger.getLogger("HorseStats");
+    public static Map<Integer, Long> SPAWN_PARENT_TIMES = new HashMap<>();
+    public static Map<Integer, Long> CHILD_TIMES = new HashMap<>();
 
     private Settings settings;
     private DecimalFormat decimalFormat;
@@ -54,7 +61,7 @@ public class HorseStats
     private static final float MAX_TEXT_RENDER_SCALE = 0.06f;
 
     private float renderDistance;
-    private static final float scale_step = (MAX_TEXT_RENDER_SCALE-MIN_TEXT_RENDER_SCALE)/30;
+    private static final float scale_step = (MAX_TEXT_RENDER_SCALE - MIN_TEXT_RENDER_SCALE) / 30;
 
     @Mod.EventHandler
     public void preInitialize(FMLPreInitializationEvent event)
@@ -74,24 +81,24 @@ public class HorseStats
         updateDecimalPlaces();
 
         //Self registers with forge to receive proper events
-        new KeyHandler();
+        new EventHandler();
 
         MinecraftForge.EVENT_BUS.register(this);
     }
 
     public void updateDecimalPlaces()
     {
-        decimalFormat = Util.CreateDecimalFormat((Integer)settings.getValue(DECIMAL_PLACES_KEY));
+        decimalFormat = Util.createDecimalFormat((Integer) settings.getValue(DECIMAL_PLACES_KEY));
     }
 
     public int getDecimalPlaces()
     {
-        return (Integer)settings.getValue(DECIMAL_PLACES_KEY);
+        return (Integer) settings.getValue(DECIMAL_PLACES_KEY);
     }
 
     public void updateRenderDistance()
     {
-        renderDistance = (Float)settings.getValue(RENDER_DISTANCE_KEY);
+        renderDistance = (Float) settings.getValue(RENDER_DISTANCE_KEY);
     }
 
     public Settings getSettings()
@@ -101,7 +108,7 @@ public class HorseStats
 
     public boolean shouldRenderStats()
     {
-        return (Boolean)settings.getValue(RENDER_KEY);
+        return (Boolean) settings.getValue(RENDER_KEY);
     }
 
     public float getRenderDistance()
@@ -111,39 +118,39 @@ public class HorseStats
 
     public float getRenderDistanceSquared()
     {
-        return renderDistance*renderDistance;
+        return renderDistance * renderDistance;
     }
 
     public Threshold getSpeedThreshold()
     {
-        return (Threshold)settings.getValue(SPEED_KEY);
+        return (Threshold) settings.getValue(SPEED_KEY);
     }
 
     public Threshold getJumpThreshold()
     {
-        return (Threshold)settings.getValue(JUMP_KEY);
+        return (Threshold) settings.getValue(JUMP_KEY);
     }
 
     public Threshold getHealthThreshold()
     {
-        return (Threshold)settings.getValue(HEALTH_KEY);
+        return (Threshold) settings.getValue(HEALTH_KEY);
     }
 
     @SubscribeEvent
     public void RenderWorldLastEvent(RenderWorldLastEvent event)
     {
-        if(mc.inGameHasFocus && shouldRenderStats())
+        if (mc.inGameHasFocus && shouldRenderStats())
         {
             for (int i = 0; i < mc.theWorld.loadedEntityList.size(); i++)
             {
                 Object object = mc.theWorld.loadedEntityList.get(i);
 
-                if(object == null || !(object instanceof EntityHorse))
+                if (object == null || !(object instanceof EntityHorse))
                 {
                     continue;
                 }
 
-                RenderHorseInfoInWorld((EntityHorse)object, event.getPartialTicks());
+                RenderHorseInfoInWorld((EntityHorse) object, event.getPartialTicks());
             }
         }
     }
@@ -157,13 +164,16 @@ public class HorseStats
         if ((mc.inGameHasFocus || mc.currentScreen == null || mc.currentScreen instanceof GuiChat))
         {
             if (mc.thePlayer.isRidingHorse() && mc.thePlayer.getRidingEntity() == horse)
+            {
                 return;    //don't render stats of the horse/animal we are currently riding
-
+            }
             //only show entities that are close by
             double distanceFromMe = mc.thePlayer.getDistanceSqToEntity(horse);
 
             if (distanceFromMe > getRenderDistanceSquared())
+            {
                 return;
+            }
 
             RenderHorseOverlay(horse, partialTickTime);
         }
@@ -171,24 +181,40 @@ public class HorseStats
 
     protected void RenderHorseOverlay(EntityHorse horse, float partialTickTime)
     {
-        float x = (float)horse.posX;
-        float y = (float)horse.posY;
-        float z = (float)horse.posZ;
+        float x = (float) horse.posX;
+        float y = (float) horse.posY;
+        float z = (float) horse.posZ;
 
-        //a positive value means the horse has bred recently
-        int animalGrowingAge = horse.getGrowingAge();
+        List<String> overlayText = new ArrayList<>(6);
+        overlayText.add((getSpeedThreshold().format(decimalFormat, Util.getEntityMaxSpeed(horse)) + " m/s"));
+        overlayText.add((Util.getCurrentHealth(horse) + getHealthThreshold().format(decimalFormat, Util.getEntityMaxHP(horse)) + " hp"));
+        overlayText.add((getJumpThreshold().format(decimalFormat, Util.getHorseMaxJump(horse)) + " jump"));
+        if (horse.hasTexture())
+        {
+            overlayText.add(Util.getHorseMarkingText(horse));
+        }
+        Long since = SPAWN_PARENT_TIMES.get(horse.getEntityId());
+        Long age = CHILD_TIMES.get(horse.getEntityId());
 
-        String[] overlayText = new String[animalGrowingAge < 0 ? 5  : 4];
+        if (since != null && (System.currentTimeMillis() - since > HORSE_WAIT_SECONDS))
+        {
+            SPAWN_PARENT_TIMES.remove(horse.getEntityId());
+        }
+        if (age != null && (System.currentTimeMillis() - age > HORSE_WAIT_SECONDS))
+        {
+            CHILD_TIMES.remove(horse.getEntityId());
+        }
 
-        overlayText[0] = (getSpeedThreshold().format(decimalFormat,Util.GetEntityMaxSpeed(horse)) +" m/s");
-        overlayText[1] = (getHealthThreshold().format(decimalFormat,Util.GetEntityMaxHP(horse)) + " hp");
-        overlayText[2] = (getJumpThreshold().format(decimalFormat,Util.GetHorseMaxJump(horse)) + " jump");
-        overlayText[3] = Util.GetHorseMarkingText(horse) + " " + Util.GetHorseColoringText(horse);
+        overlayText.add(Util.getHorseDetails(horse, age, since));
+        final String name = horse.getCustomNameTag();
+        if (StringUtils.isNotEmpty(name))
+        {
+            overlayText.add(String.format("'%s'", name));
+        }
 
-        if (animalGrowingAge < 0)
-            overlayText[4] = (Util.GetHorseBabyGrowingAgeAsPercent(horse) + "%");
-
-        RenderFloatingText(overlayText, x, y+1.3f, z, 0xFFFFFF, true, partialTickTime);
+        RenderFloatingText(overlayText.toArray(new String[]
+        {
+        }), x, y + 1.3f, z, 0xFFFFFF, true, partialTickTime);
     }
 
     public void RenderFloatingText(String[] text, float x, float y, float z, int color, boolean renderBlackBackground, float partialTickTime)
@@ -202,11 +228,11 @@ public class HorseStats
         float playerY = (float) (mc.thePlayer.lastTickPosY + (mc.thePlayer.posY - mc.thePlayer.lastTickPosY) * partialTickTime);
         float playerZ = (float) (mc.thePlayer.lastTickPosZ + (mc.thePlayer.posZ - mc.thePlayer.lastTickPosZ) * partialTickTime);
 
-        float dx = x-playerX;
-        float dy = y-playerY;
-        float dz = z-playerZ;
-        float distance = (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
-        float scale = MIN_TEXT_RENDER_SCALE + (distance*scale_step);//.01f; //Min font scale for max text render distance
+        float dx = x - playerX;
+        float dy = y - playerY;
+        float dz = z - playerZ;
+        float distance = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        float scale = MIN_TEXT_RENDER_SCALE + (distance * scale_step);//.01f; //Min font scale for max text render distance
 
         GL11.glColor4f(1f, 1f, 1f, 0.5f);
         GL11.glPushMatrix();
@@ -226,13 +252,15 @@ public class HorseStats
             int thisMessageWidth = mc.fontRendererObj.getStringWidth(thisMessage);
 
             if (thisMessageWidth > textWidth)
+            {
                 textWidth = thisMessageWidth;
+            }
         }
 
         int lineHeight = 10;
-        int initialValue = lineHeight*text.length;
+        int initialValue = lineHeight * text.length;
 
-        if(renderBlackBackground)
+        if (renderBlackBackground)
         {
             int stringMiddle = textWidth / 2;
 
@@ -243,10 +271,10 @@ public class HorseStats
 
             //This code taken from 1.8.8 net.minecraft.client.renderer.entity.Render.renderLivingLabel()
             vertexBuffer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-            vertexBuffer.pos((double) (-stringMiddle - 1), (double) (-1)-initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-            vertexBuffer.pos((double) (-stringMiddle - 1), (double) (8 + lineHeight*(text.length-1))-initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-            vertexBuffer.pos((double) (stringMiddle + 1), (double) (8 + lineHeight*(text.length-1))-initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
-            vertexBuffer.pos((double) (stringMiddle + 1), (double) (-1)-initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
+            vertexBuffer.pos((double) (-stringMiddle - 1), (double) (-1) - initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
+            vertexBuffer.pos((double) (-stringMiddle - 1), (double) (8 + lineHeight * (text.length - 1)) - initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
+            vertexBuffer.pos((double) (stringMiddle + 1), (double) (8 + lineHeight * (text.length - 1)) - initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
+            vertexBuffer.pos((double) (stringMiddle + 1), (double) (-1) - initialValue, 0.0D).color(0.0F, 0.0F, 0.0F, 0.25F).endVertex();
 
             tessellator.draw();
 
@@ -254,9 +282,9 @@ public class HorseStats
         }
 
         int i = 0;
-        for(String message : text)
+        for (String message : text)
         {
-            mc.fontRendererObj.drawString(message, -textWidth / 2, (i*lineHeight)-initialValue, color);
+            mc.fontRendererObj.drawString(message, -textWidth / 2, (i * lineHeight) - initialValue, color);
             i++;
         }
 
@@ -268,17 +296,19 @@ public class HorseStats
 
     private void initializeSettings()
     {
-        File file = new File(Minecraft.getMinecraft().mcDataDir, "/mods/"+MODNAME);
-        if(!file.exists())
+        File file = new File(Minecraft.getMinecraft().mcDataDir, "/mods/" + MODNAME);
+        if (!file.exists())
+        {
             file.mkdir();
+        }
 
-        settings = new Settings(new File(modSettingsFile),parser);
+        settings = new Settings(new File(modSettingsFile), parser);
         settings.loadSettings();
 
         //Threshold(bad,average,good)
-        settings.setValueIfNotSet(JUMP_KEY,new Threshold(4,5));
-        settings.setValueIfNotSet(SPEED_KEY,new Threshold(11,13));
-        settings.setValueIfNotSet(HEALTH_KEY,new Threshold(24,28));
+        settings.setValueIfNotSet(JUMP_KEY, new Threshold(4, 5));
+        settings.setValueIfNotSet(SPEED_KEY, new Threshold(11, 13));
+        settings.setValueIfNotSet(HEALTH_KEY, new Threshold(24, 28));
 
         settings.setValueIfNotSet(RENDER_DISTANCE_KEY, 15.0F);
         settings.setValueIfNotSet(RENDER_KEY, Boolean.TRUE);
@@ -292,21 +322,24 @@ public class HorseStats
         @Override
         public Object parse(String key, String value)
         {
-            if(key.contains("threshold"))
+            if (key.contains("threshold"))
+            {
                 return Threshold.fromString(value);
-            else if(value.equalsIgnoreCase(Boolean.FALSE.toString()))
+            } else if (value.equalsIgnoreCase(Boolean.FALSE.toString()))
+            {
                 return Boolean.FALSE;
-            else if(value.equalsIgnoreCase(Boolean.TRUE.toString()))
+            } else if (value.equalsIgnoreCase(Boolean.TRUE.toString()))
+            {
                 return Boolean.TRUE;
-            else if(key.equalsIgnoreCase(RENDER_DISTANCE_KEY))
+            } else if (key.equalsIgnoreCase(RENDER_DISTANCE_KEY))
+            {
                 return Float.parseFloat(value);
-            else
+            } else
             {
                 try
                 {
                     return Integer.parseInt(value);
-                }
-                catch(NumberFormatException e)
+                } catch (NumberFormatException e)
                 {
                     //Return a string
                     return value;
