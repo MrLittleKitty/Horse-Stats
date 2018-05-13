@@ -26,23 +26,6 @@ public class EventHandler {
     }
 
     @SubscribeEvent
-    public void onBabySpawn(BabyEntitySpawnEvent event) {
-        try {
-            if (event instanceof BabyEntitySpawnEvent) {
-                BabyEntitySpawnEvent spawn = (BabyEntitySpawnEvent) event;
-                if (spawn.getChild() instanceof EntityHorse) {
-                    long time = System.currentTimeMillis();
-                    HorseStats.SPAWN_PARENT_TIMES.put(spawn.getParentA().getEntityId(), time);
-                    HorseStats.SPAWN_PARENT_TIMES.put(spawn.getParentB().getEntityId(), time);
-                    HorseStats.CHILD_TIMES.put(spawn.getChild().getEntityId(), time);
-                }
-
-            }
-        } catch (Exception e) {
-        }
-    }
-
-    @SubscribeEvent
     public void onKeyPress(InputEvent.KeyInputEvent event) {
         if (toggleButton.isPressed()) {
             Minecraft.getMinecraft().displayGuiScreen(new GuiHorseStats(HorseStats.instance));

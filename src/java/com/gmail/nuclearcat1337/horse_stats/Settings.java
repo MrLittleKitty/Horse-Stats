@@ -9,10 +9,11 @@ import java.util.Map;
  */
 public class Settings
 {
+
     private final File file;
     private final ValueParser parser;
 
-    private final HashMap<String,Object> values;
+    private final HashMap<String, Object> values;
 
     public Settings(File file, ValueParser parser)
     {
@@ -22,8 +23,7 @@ public class Settings
             try
             {
                 file.createNewFile();
-            }
-            catch (IOException e)
+            } catch (IOException e)
             {
                 //Dont do anything
             }
@@ -35,8 +35,10 @@ public class Settings
 
     public void setValueIfNotSet(String key, Object value)
     {
-        if(!values.containsKey(key))
-            values.put(key,value);
+        if (!values.containsKey(key))
+        {
+            values.put(key, value);
+        }
     }
 
     public boolean hasValue(String key)
@@ -46,7 +48,7 @@ public class Settings
 
     public void setValue(String key, Object value)
     {
-        values.put(key,value);
+        values.put(key, value);
     }
 
     public Object getValue(String key)
@@ -54,27 +56,30 @@ public class Settings
         return values.get(key);
     }
 
+    public Boolean getBooleanValue(String key)
+    {
+        return (values.get(key) instanceof Boolean) ? (Boolean) values.get(key) : false;
+    }
+
     public void loadSettings()
     {
-        if(file.exists())
+        if (file.exists())
         {
             try
             {
                 BufferedReader reader = new BufferedReader(new FileReader(file));
                 String line = null;
-                while((line = reader.readLine()) != null)
+                while ((line = reader.readLine()) != null)
                 {
                     String[] tokens = line.split("=");
-                    Object value = parser.parse(tokens[0],tokens[1]);
-                    values.put(tokens[0],value);
+                    Object value = parser.parse(tokens[0], tokens[1]);
+                    values.put(tokens[0], value);
                 }
                 reader.close();
-            }
-            catch (FileNotFoundException e)
+            } catch (FileNotFoundException e)
             {
                 e.printStackTrace();
-            }
-            catch (IOException e)
+            } catch (IOException e)
             {
                 e.printStackTrace();
             }
@@ -86,11 +91,13 @@ public class Settings
         BufferedWriter writer = null;
         try
         {
-            if(!file.exists())
+            if (!file.exists())
+            {
                 file.createNewFile();
+            }
 
             writer = new BufferedWriter(new FileWriter(file));
-            for(Map.Entry<String,Object> entry : values.entrySet())
+            for (Map.Entry<String, Object> entry : values.entrySet())
             {
                 writer.write(entry.getKey());
                 writer.write('=');
@@ -99,8 +106,7 @@ public class Settings
             }
             writer.flush();
             writer.close();
-        }
-        catch (IOException e)
+        } catch (IOException e)
         {
             e.printStackTrace();
         }
@@ -108,6 +114,7 @@ public class Settings
 
     public interface ValueParser
     {
+
         Object parse(String key, String value);
     }
 }

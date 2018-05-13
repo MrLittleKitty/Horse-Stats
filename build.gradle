@@ -9,7 +9,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
@@ -20,15 +20,17 @@ plugins {
     id "net.minecraftforge.gradle.forge" version "2.0.2"
 }
 */
-version = "1.10.2-2.0.1"
+version = "1.12.2-2.0.2"
 group= "com.gmail.nuclearcat1337.horse_stats" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "HorseStats"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+apply plugin: 'net.minecraftforge.gradle.forge'
+
 minecraft {
-    version = "1.10.2-12.18.3.2185"
+    version = "1.12.2-14.23.2.2611"
     runDir = "run"
 
     // the mappings can be changed at any time, and must be in the following format.
@@ -36,7 +38,7 @@ minecraft {
     // stable_#            stables are built at the discretion of the MCP team.
     // Use non-default mappings at your own risk. they may not allways work.
     // simply re-run your setup task after changing the mappings to update your workspace.
-    mappings = "snapshot_20160518"
+    mappings = "snapshot_20180319"
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 }
 

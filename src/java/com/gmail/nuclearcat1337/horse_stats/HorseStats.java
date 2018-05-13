@@ -4,7 +4,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.passive.EntityHorse;
@@ -23,8 +22,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-import net.minecraft.entity.passive.HorseType;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.entity.passive.AbstractHorse;
+import net.minecraft.entity.passive.EntityZombieHorse;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 
 /*
 Created by Mr_Little_Kitty on 12/17/2015
@@ -44,6 +46,16 @@ public class HorseStats
     public static final String SPEED_KEY = "speed-threshold";
     public static final String HEALTH_KEY = "health-threshold";
 
+    public static final String SHOW_PATTERN_KEY = "show-pattern";
+    public static final String SHOW_COLOR_KEY = "show-color";
+    public static final String SHOW_HP_KEY = "show-hp";
+    public static final String SHOW_JUMP_KEY = "show-jump";
+    public static final String SHOW_SPEED_KEY = "show-speed";
+    public static final String SHOW_HORSETYPE_KEY = "show-horsetype";
+    public static final String SHOW_FOALSTATUS_KEY = "show-foalstatus";
+    public static final String SHOW_TAMENESS_KEY = "show-tameness";
+    public static final String SHOW_NAME_KEY = "show-name";
+
     private static Minecraft mc = Minecraft.getMinecraft();
     private static final String modSettingsFile = mc.mcDataDir + "/mods/" + MODNAME + "/Settings.txt";
     private static final long HORSE_WAIT_SECONDS = 5 * 60 * 1000;
@@ -51,8 +63,6 @@ public class HorseStats
     @Mod.Instance(MODID)
     public static HorseStats instance;
     public static Logger logger = Logger.getLogger("HorseStats");
-    public static Map<Integer, Long> SPAWN_PARENT_TIMES = new HashMap<>();
-    public static Map<Integer, Long> CHILD_TIMES = new HashMap<>();
 
     private Settings settings;
     private DecimalFormat decimalFormat;
@@ -141,21 +151,21 @@ public class HorseStats
     {
         if (mc.inGameHasFocus && shouldRenderStats())
         {
-            for (int i = 0; i < mc.theWorld.loadedEntityList.size(); i++)
+            for (int i = 0; i < mc.world.loadedEntityList.size(); i++)
             {
-                Object object = mc.theWorld.loadedEntityList.get(i);
+                Object object = mc.world.loadedEntityList.get(i);
 
-                if (object == null || !(object instanceof EntityHorse))
+                if (object == null || !(object instanceof AbstractHorse))
                 {
                     continue;
                 }
 
-                RenderHorseInfoInWorld((EntityHorse) object, event.getPartialTicks());
+                RenderHorseInfoInWorld((AbstractHorse) object, event.getPartialTicks());
             }
         }
     }
 
-    private void RenderHorseInfoInWorld(EntityHorse horse, float partialTickTime)
+    private void RenderHorseInfoInWorld(AbstractHorse horse, float partialTickTime)
     {
         //if the player is in the world
         //and not looking at a menu
@@ -163,14 +173,14 @@ public class HorseStats
         //if ((mc.inGameHasFocus || mc.currentScreen == null || mc.currentScreen instanceof GuiChat) && !mc.gameSettings.showDebugInfo)
         if ((mc.inGameHasFocus || mc.currentScreen == null || mc.currentScreen instanceof GuiChat))
         {
-            if (mc.thePlayer.isRidingHorse() && mc.thePlayer.getRidingEntity() == horse)
+            if (mc.player.isRidingHorse() && mc.player.getRidingEntity() == horse)
             {
                 return;    //don't render stats of the horse/animal we are currently riding
             }
             //only show entities that are close by
-            double distanceFromMe = mc.thePlayer.getDistanceSqToEntity(horse);
+            double distanceFromMe = mc.player.getDistanceSq(horse);
 
-            if (distanceFromMe > getRenderDistanceSquared())
+            if (renderDistance < 128 && distanceFromMe > getRenderDistanceSquared())
             {
                 return;
             }
@@ -179,35 +189,42 @@ public class HorseStats
         }
     }
 
-    protected void RenderHorseOverlay(EntityHorse horse, float partialTickTime)
+    protected void RenderHorseOverlay(AbstractHorse horse, float partialTickTime)
     {
         float x = (float) horse.posX;
         float y = (float) horse.posY;
         float z = (float) horse.posZ;
 
         List<String> overlayText = new ArrayList<>(6);
-        overlayText.add((getSpeedThreshold().format(decimalFormat, Util.getEntityMaxSpeed(horse)) + " m/s"));
-        overlayText.add((Util.getCurrentHealth(horse) + getHealthThreshold().format(decimalFormat, Util.getEntityMaxHP(horse)) + " hp"));
-        overlayText.add((getJumpThreshold().format(decimalFormat, Util.getHorseMaxJump(horse)) + " jump"));
-        if (horse.hasTexture())
+        if ((Boolean) getSettings().getValue(SHOW_SPEED_KEY))
         {
-            overlayText.add(Util.getHorseMarkingText(horse));
+            overlayText.add((getSpeedThreshold().format(decimalFormat, Util.getEntityMaxSpeed(horse)) + " m/s"));
         }
-        Long since = SPAWN_PARENT_TIMES.get(horse.getEntityId());
-        Long age = CHILD_TIMES.get(horse.getEntityId());
+        if ((Boolean) getSettings().getValue(SHOW_HP_KEY))
+        {
+            overlayText.add((Util.getCurrentHealth(horse) + getHealthThreshold().format(decimalFormat, Util.getEntityMaxHP(horse)) + " hp"));
+        }
+        if ((Boolean) getSettings().getValue(SHOW_JUMP_KEY))
+        {
+            overlayText.add((getJumpThreshold().format(decimalFormat, Util.getHorseMaxJump(horse)) + " jump"));
+        }
+        if ((Boolean) getSettings().getValue(SHOW_PATTERN_KEY))
+        {
+            final String texture = horse instanceof EntityHorse ? Util.getHorseMarkingText((EntityHorse) horse) : "";
+            if (texture != "")
+            {
+                overlayText.add(texture);
+            }
+        }
 
-        if (since != null && (System.currentTimeMillis() - since > HORSE_WAIT_SECONDS))
+//        overlayText.add(Util.getHorseOwner(horse));
+        String horseDetails = getHorseDetails(horse);
+        if (!horseDetails.isEmpty())
         {
-            SPAWN_PARENT_TIMES.remove(horse.getEntityId());
+            overlayText.add(horseDetails);
         }
-        if (age != null && (System.currentTimeMillis() - age > HORSE_WAIT_SECONDS))
-        {
-            CHILD_TIMES.remove(horse.getEntityId());
-        }
-
-        overlayText.add(Util.getHorseDetails(horse, age, since));
         final String name = horse.getCustomNameTag();
-        if (StringUtils.isNotEmpty(name))
+        if ((Boolean) getSettings().getValue(SHOW_NAME_KEY) && StringUtils.isNotEmpty(name))
         {
             overlayText.add(String.format("'%s'", name));
         }
@@ -217,6 +234,26 @@ public class HorseStats
         }), x, y + 1.3f, z, 0xFFFFFF, true, partialTickTime);
     }
 
+    public String getHorseDetails(AbstractHorse horse)
+    {
+        final List<String> details = new ArrayList<>();
+        if ((Boolean) getSettings().getValue(SHOW_TAMENESS_KEY) && !horse.isChild())
+        {
+            details.add(!horse.isTame() ? "Wild" : "Tamed");
+        }
+        if ((Boolean) getSettings().getValue(SHOW_FOALSTATUS_KEY))
+        {
+            details.add(horse.isChild() ? "Foal" : "Adult");
+        }
+        if ((Boolean) getSettings().getValue(SHOW_HORSETYPE_KEY))
+        {
+            details.add(Util.getHorseTypeName(horse.getClass()));
+        }
+        return String.join(" ", details.toArray(new String[]
+        {
+        }));
+    }
+
     public void RenderFloatingText(String[] text, float x, float y, float z, int color, boolean renderBlackBackground, float partialTickTime)
     {
         //Thanks to Electric-Expansion mod for the majority of this code
@@ -224,9 +261,9 @@ public class HorseStats
 
         RenderManager renderManager = mc.getRenderManager();
 
-        float playerX = (float) (mc.thePlayer.lastTickPosX + (mc.thePlayer.posX - mc.thePlayer.lastTickPosX) * partialTickTime);
-        float playerY = (float) (mc.thePlayer.lastTickPosY + (mc.thePlayer.posY - mc.thePlayer.lastTickPosY) * partialTickTime);
-        float playerZ = (float) (mc.thePlayer.lastTickPosZ + (mc.thePlayer.posZ - mc.thePlayer.lastTickPosZ) * partialTickTime);
+        float playerX = (float) (mc.player.lastTickPosX + (mc.player.posX - mc.player.lastTickPosX) * partialTickTime);
+        float playerY = (float) (mc.player.lastTickPosY + (mc.player.posY - mc.player.lastTickPosY) * partialTickTime);
+        float playerZ = (float) (mc.player.lastTickPosZ + (mc.player.posZ - mc.player.lastTickPosZ) * partialTickTime);
 
         float dx = x - playerX;
         float dy = y - playerY;
@@ -249,7 +286,7 @@ public class HorseStats
         int textWidth = 0;
         for (String thisMessage : text)
         {
-            int thisMessageWidth = mc.fontRendererObj.getStringWidth(thisMessage);
+            int thisMessageWidth = mc.fontRenderer.getStringWidth(thisMessage);
 
             if (thisMessageWidth > textWidth)
             {
@@ -265,7 +302,7 @@ public class HorseStats
             int stringMiddle = textWidth / 2;
 
             Tessellator tessellator = Tessellator.getInstance();
-            VertexBuffer vertexBuffer = tessellator.getBuffer();
+            BufferBuilder vertexBuffer = tessellator.getBuffer();
 
             GlStateManager.disableTexture2D();
 
@@ -284,7 +321,7 @@ public class HorseStats
         int i = 0;
         for (String message : text)
         {
-            mc.fontRendererObj.drawString(message, -textWidth / 2, (i * lineHeight) - initialValue, color);
+            mc.fontRenderer.drawString(message, -textWidth / 2, (i * lineHeight) - initialValue, color);
             i++;
         }
 
@@ -313,6 +350,16 @@ public class HorseStats
         settings.setValueIfNotSet(RENDER_DISTANCE_KEY, 15.0F);
         settings.setValueIfNotSet(RENDER_KEY, Boolean.TRUE);
         settings.setValueIfNotSet(DECIMAL_PLACES_KEY, 3);
+
+        settings.setValueIfNotSet(SHOW_COLOR_KEY, Boolean.TRUE);
+        settings.setValueIfNotSet(SHOW_FOALSTATUS_KEY, Boolean.TRUE);
+        settings.setValueIfNotSet(SHOW_HORSETYPE_KEY, Boolean.TRUE);
+        settings.setValueIfNotSet(SHOW_HP_KEY, Boolean.TRUE);
+        settings.setValueIfNotSet(SHOW_JUMP_KEY, Boolean.TRUE);
+        settings.setValueIfNotSet(SHOW_NAME_KEY, Boolean.TRUE);
+        settings.setValueIfNotSet(SHOW_PATTERN_KEY, Boolean.TRUE);
+        settings.setValueIfNotSet(SHOW_SPEED_KEY, Boolean.TRUE);
+        settings.setValueIfNotSet(SHOW_TAMENESS_KEY, Boolean.TRUE);
 
         settings.saveSettings();
     }
