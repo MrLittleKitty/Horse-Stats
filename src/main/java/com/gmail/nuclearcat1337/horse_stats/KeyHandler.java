@@ -12,21 +12,17 @@ import org.lwjgl.input.Keyboard;
 /**
  * Created by Mr_Little_Kitty on 1/10/2017.
  */
-public class KeyHandler
-{
-    private final KeyBinding toggleButton = new KeyBinding("Horse Stats Menu", Keyboard.KEY_P,"Horse Stats");
+public class KeyHandler {
+    private final KeyBinding toggleButton = new KeyBinding("Horse Stats Menu", Keyboard.KEY_P, "Horse Stats");
 
-    public KeyHandler()
-    {
+    public KeyHandler() {
         ClientRegistry.registerKeyBinding(toggleButton);
         FMLCommonHandler.instance().bus().register(this);
     }
 
     @SubscribeEvent
-    public void onKeyPress(InputEvent.KeyInputEvent event)
-    {
-        if(toggleButton.isPressed())
-        {
+    public void onKeyPress(InputEvent.KeyInputEvent event) {
+        if (toggleButton.isPressed()) {
             Minecraft.getMinecraft().displayGuiScreen(new GuiHorseStats(HorseStats.instance));
         }
     }

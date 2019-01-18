@@ -3,66 +3,155 @@
 buildscript {
     repositories {
         jcenter()
+        mavenLocal()
+        mavenCentral()
+        maven { url = "http://files.minecraftforge.net/maven" }
+        maven { url 'https://oss.sonatype.org/content/groups/public/' }
         maven {
-            name = "forge"
-            url = "http://files.minecraftforge.net/maven"
+            url "https://plugins.gradle.org/m2/"
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+        classpath "de.undercouch:gradle-download-task:3.4.3"
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
+//Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
-/*
-// for people who want stable - not yet functional for MC 1.8.8 - we require the forgegradle 2.1 snapshot
-plugins {
-    id "net.minecraftforge.gradle.forge" version "2.0.2"
+repositories {
+    jcenter()
+    mavenLocal()
+    mavenCentral()
+    maven {
+        name 'spigot-repo'
+        url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
 }
-*/
-version = "1.10.2-2.0.1"
+apply plugin: 'de.undercouch.download'
+
+version = "1.12.2-1.3.0"
 group= "com.gmail.nuclearcat1337.horse_stats" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "HorseStats"
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
+compileJava {
+    sourceCompatibility = targetCompatibility = '1.8'
+}
 
 minecraft {
-    version = "1.10.2-12.18.3.2185"
+    version = "1.12.2-14.23.5.2768"
     runDir = "run"
-
+    
     // the mappings can be changed at any time, and must be in the following format.
     // snapshot_YYYYMMDD   snapshot are built nightly.
     // stable_#            stables are built at the discretion of the MCP team.
     // Use non-default mappings at your own risk. they may not allways work.
     // simply re-run your setup task after changing the mappings to update your workspace.
-    mappings = "snapshot_20160518"
+    mappings = "snapshot_20171003"
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 }
 
-processResources
-        {
-            // this will ensure that this task is redone when the versions change.
-            inputs.property "version", project.version
-            inputs.property "mcversion", project.minecraft.version
-
-            // replace stuff in mcmod.info, nothing else
-            from(sourceSets.main.resources.srcDirs) {
-                include 'mcmod.info'
-
-                // replace version and mcversion
-                expand 'version':project.version, 'mcversion':project.minecraft.version
-            }
-
-            // copy everything else, thats not the mcmod.info
-            from(sourceSets.main.resources.srcDirs) {
-                exclude 'mcmod.info'
-            }
-        }
-
-sourceSets {
-    main {
-        java { srcDirs = ["$projectDir/src/java"] }
-        resources { srcDirs = ["$projectDir/src/resources"] }
+configurations {
+    server {
+        description = 'dependencies that the server should have'
+        transitive = true
     }
+}
+
+dependencies {
+    server group: 'org.spigotmc', name: 'spigot', version: project.property('apiversion')
+    server group: 'org.bukkit', name: 'craftbukkit', version: project.property('apiversion')
+}
+
+processResources
+{
+    // this will ensure that this task is redone when the versions change.
+    inputs.property "version", project.version
+    inputs.property "mcversion", project.minecraft.version
+
+    // replace stuff in mcmod.info, nothing else
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+                
+        // replace version and mcversion
+        expand 'version':project.version, 'mcversion':project.minecraft.version
+    }
+        
+    // copy everything else, thats not the mcmod.info
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
+
+def spigotBuildDir = new File("${project.buildDir}/spigot/")
+
+task buildSpigot(type: Exec) {
+    group = 'spigot server'
+    if (hasSpigot()) {
+        enabled = false;
+    } else {
+        dependsOn 'downloadBuildTools'
+
+        if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+            commandLine 'where git'.execute().text.trim().replace('cmd\\git.exe', 'bin\\sh.exe'), '-login', '-c', 'java -jar BuildTools.jar --rev ' + project.property('apibuildtoolversion')
+        } else {
+            commandLine 'java -jar BuildTools.jar --rev ' + project.property('apibuildtoolversion')
+        }
+        workingDir = spigotBuildDir
+    }
+}
+
+task downloadBuildTools(type: de.undercouch.gradle.tasks.download.Download) {
+    group = 'spigot server'
+    spigotBuildDir.mkdirs()
+    src project.property('buildtoolurl')
+    dest new File(spigotBuildDir, 'BuildTools.jar')
+}
+
+task extractServerJar(type: Copy) {
+    group = 'spigot server'
+    from {
+        configurations.server
+    }
+    include("spigot-" + project.property("apiversion") + ".jar")
+    rename("spigot-" + project.property("apiversion") + ".jar", "server.jar")
+    into "testserver/"
+}
+
+task setupDevServer(dependsOn: 'extractServerJar', type: Copy) {
+    group = 'spigot server'
+    from 'config/serverfiles'
+    into 'testserver'
+}
+
+task prepareDevServer(dependsOn: ['buildSpigot', 'setupDevServer']) {
+    group = 'spigot server'
+}
+
+task startDevServer(dependsOn: [prepareDevServer], type: JavaExec) {
+    group = 'spigot server'
+    description = 'Starts a spigot test server'
+    classpath configurations.server
+    main = 'org.bukkit.craftbukkit.Main'
+    workingDir = 'testserver/'
+    standardInput = System.in
+}
+
+task wrapper(type: Wrapper) {
+    group = 'spigot server'
+    description = 'Generates and updates Gradle wrapper files.'
+    gradleVersion = '4.1'
+}
+
+def hasSpigot() {
+    def groupId = 'org.spigotmc'
+    def version = project.property('apiversion')
+    return hasArtifact(groupId, 'spigot-api', version) && hasArtifact(groupId, 'spigot', version)
+}
+
+def hasArtifact(groupId, artifactId, version) {
+    def localMavenRepo = new File(new File(ant.properties['user.home'] as String), '.m2/repository/')
+    def file = new File(localMavenRepo, groupId.replace('.', '/') + '/' + artifactId + '/' + version + '/')
+    return file.exists()
 }

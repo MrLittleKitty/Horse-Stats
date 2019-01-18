@@ -4,6 +4,8 @@
 /run
 /libs
 /.gradle
+/testserver
+/config/serverfiles
 
 *.iml
 *.xml
