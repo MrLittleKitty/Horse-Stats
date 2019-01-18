@@ -3,6 +3,7 @@ package com.gmail.nuclearcat1337.horse_stats;
 import com.gmail.nuclearcat1337.horse_stats.gui.GuiHorseStats;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -17,7 +18,7 @@ public class KeyHandler {
 
     public KeyHandler() {
         ClientRegistry.registerKeyBinding(toggleButton);
-        FMLCommonHandler.instance().bus().register(this);
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     @SubscribeEvent
