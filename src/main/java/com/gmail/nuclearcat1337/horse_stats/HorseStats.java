@@ -116,9 +116,13 @@ public class HorseStats {
     }
 
     public void saveSettings() {
+        final File parentDirectory = modSettingsFile.getParentFile();
+        if (!parentDirectory.exists()) {
+            parentDirectory.mkdir();
+        }
+
         if (!modSettingsFile.exists()) {
             try {
-                modSettingsFile.mkdir();
                 modSettingsFile.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
